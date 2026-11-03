@@ -26,25 +26,6 @@ import androidx.compose.ui.unit.sp
 /** Margine orizzontale standard dei contenuti. */
 val ScreenPadding = 20.dp
 
-/**
- * Etichetta che segnala un contenuto di esempio: il layout è definitivo ma il contenuto
- * reale arriverà nelle fasi successive. Serve a non far passare mai un segnaposto per un dato vero.
- */
-@Composable
-fun SampleBadge(modifier: Modifier = Modifier, text: String = "ANTEPRIMA") {
-    Box(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(50))
-            .padding(horizontal = 8.dp, vertical = 3.dp),
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-        )
-    }
-}
-
 @Composable
 fun SectionTitle(
     title: String,
@@ -97,7 +78,6 @@ fun EmojiBubble(emoji: String, modifier: Modifier = Modifier, size: Int = 44, ba
     }
 }
 
-/** Segnala che una funzione è prevista in una fase successiva del progetto. */
 @Composable
 fun PhaseChip(phase: Int, modifier: Modifier = Modifier) {
     Box(

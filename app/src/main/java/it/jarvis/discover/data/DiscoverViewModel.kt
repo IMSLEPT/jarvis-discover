@@ -14,6 +14,7 @@ import it.jarvis.discover.data.backup.BackupManager
 import it.jarvis.discover.data.content.LibraryStore
 import it.jarvis.discover.data.content.NewsRepository
 import it.jarvis.discover.data.content.TodayBook
+import it.jarvis.discover.data.notes.NotesStore
 import it.jarvis.discover.data.wellbeing.ActivityKind
 import it.jarvis.discover.data.wellbeing.BreathingPlayer
 import it.jarvis.discover.data.wellbeing.NoisePlayer
@@ -81,6 +82,9 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
     val sessions = SessionPlayer(viewModelScope, TtsSpeaker(app), wellbeing)
     val breathing = BreathingPlayer(viewModelScope, wellbeing)
     val noise = NoisePlayer(viewModelScope, wellbeing)
+
+    /** Quaderno personale: note e cose imparate. */
+    val notes = NotesStore.from(app)
 
     /** Assistente: regole in italiano sulle fonti reali dell'app e, se l'utente lo vuole, Gemini con la sua chiave. */
     val assistant = AssistantEngine(

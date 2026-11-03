@@ -16,6 +16,7 @@ object BackupSpec {
         "discover_profile" to emptySet(),
         "discover_wellbeing" to emptySet(),
         "discover_assistant" to emptySet(),
+        "discover_notes" to emptySet(),
     )
 
     /** Nomi dei segreti nell'archivio cifrato. */

@@ -254,6 +254,8 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                     library = vm.library,
                     audio = vm.audio,
                     profile = vm.videos.profile,
+                    notes = vm.notes,
+                    wellbeing = vm.wellbeing,
                 )
             }
         }

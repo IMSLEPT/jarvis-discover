@@ -56,6 +56,9 @@ import it.jarvis.discover.data.content.LibraryStore
 import it.jarvis.discover.data.creators.Creator
 import it.jarvis.discover.data.reco.ProfileStore
 import it.jarvis.discover.playback.AudioController
+import it.jarvis.discover.data.notes.NotesStore
+import it.jarvis.discover.data.wellbeing.WellbeingStore
+import it.jarvis.discover.ui.notes.NotesTab
 import it.jarvis.discover.ui.profile.ProfileTab
 import it.jarvis.discover.ui.content.LibraryTab
 import it.jarvis.discover.data.creators.FollowedCreator
@@ -69,7 +72,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val CollectionTabs = listOf("Video", "Libri e ascolto", "Diario", "Creator", "Interessi", "Profilo")
+private val CollectionTabs = listOf("Video", "Libri e ascolto", "Quaderno", "Diario", "Creator", "Interessi", "Profilo")
 
 @Composable
 fun RaccoltaScreen(
@@ -85,6 +88,8 @@ fun RaccoltaScreen(
     library: LibraryStore,
     audio: AudioController,
     profile: ProfileStore,
+    notes: NotesStore,
+    wellbeing: WellbeingStore,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var playing by remember { mutableStateOf<VideoItem?>(null) }
@@ -120,10 +125,16 @@ fun RaccoltaScreen(
         when (tab) {
             0 -> SavedVideos(savedVideos, onPlay = { playing = it }, onRemove = onRemoveVideo)
             1 -> LibraryTab(library, audio, interests)
-            2 -> DiaryList(gratitude, onDeleteGratitude)
-            3 -> FollowedList(follows, onOpenCreator)
-            4 -> InterestsTab(interests, onRemoveInterest, onManageInterests)
-            else -> ProfileTab(profile, onPlay = { playing = it })
+            2 -> NotesTab(notes)
+            3 -> DiaryList(gratitude, onDeleteGratitude)
+            4 -> FollowedList(follows, onOpenCreator)
+            5 -> InterestsTab(interests, onRemoveInterest, onManageInterests)
+            else -> ProfileTab(
+                profile = profile,
+                onPlay = { playing = it },
+                wellbeingMinutes = wellbeing.weekMinutes(),
+                notesThisWeek = notes.recent(7).size,
+            )
         }
     }
 

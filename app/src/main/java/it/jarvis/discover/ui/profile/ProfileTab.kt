@@ -71,7 +71,7 @@ private enum class Confirm(val title: String, val body: String, val action: Stri
 
 /** "Il tuo profilo": ciò che Discover ha imparato di te, modificabile voce per voce e azzerabile. */
 @Composable
-fun ProfileTab(profile: ProfileStore, onPlay: (VideoItem) -> Unit) {
+fun ProfileTab(profile: ProfileStore, onPlay: (VideoItem) -> Unit, wellbeingMinutes: Int, notesThisWeek: Int) {
     var confirm by remember { mutableStateOf<Confirm?>(null) }
     var showAllHistory by remember { mutableStateOf(false) }
 
@@ -85,6 +85,23 @@ fun ProfileTab(profile: ProfileStore, onPlay: (VideoItem) -> Unit) {
         contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 12.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        item(key = "stats") {
+            SoftCard {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("La tua settimana", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        text = "Video guardati: $watchedThisWeek  ·  Minuti per il benessere: $wellbeingMinutes  ·  Note scritte: $notesThisWeek",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = "Numeri solo per te, senza obiettivi né serie da mantenere: usa l'app quanto ti serve.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
         item(key = "switch") {
             SoftCard {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
