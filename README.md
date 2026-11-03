@@ -10,13 +10,13 @@ sotto il controllo dell'utente. Obiettivo: costo zero, nessuna API a pagamento.
 |---|---|---|
 | 1 | Identità grafica, navigazione, schermate principali | completata |
 | 2 | Selezione e gestione degli interessi | completata |
-| 3 | Feed video con contenuti reali in italiano | **in corso** (codice scritto, test automatici superati in CI; mai provato con una chiave vera) |
+| 3 | Feed video con contenuti reali in italiano | completata nel codice, test automatici superati in CI; mai provata con una chiave vera |
 | 4 | Catalogo creator e ricerca | da fare |
 | 5 | Notizie positive, libri e podcast | da fare |
 | 6 | Meditazione, mindfulness e gratitudine | parziale (respirazione e diario già attivi) |
 | 7 | Algoritmo di personalizzazione | da fare |
 | 8 | Assistente AI | da fare |
-| 9 | Ottimizzazione, debug e APK | da fare |
+| 9 | Ottimizzazione, debug e APK | parziale: build ottimizzata (R8), controllo lint, APK scaricabile da Releases. Le fasi 4-8 non sono ancora state costruite |
 
 ## Cosa funziona davvero (fasi 1, 2 e 3)
 
@@ -66,8 +66,10 @@ L'unico permesso è INTERNET, usato solo per parlare con YouTube (API e player) 
 
 ## Build
 
-L'APK di debug viene compilato da GitHub Actions a ogni push (`.github/workflows/build-apk.yml`):
-scaricalo dall'artifact `discover-debug-apk` della corsa del workflow.
+L'APK viene compilato da GitHub Actions a ogni push (`.github/workflows/build-apk.yml`) e
+pubblicato nella pagina **Releases** (tag `latest`): `discover.apk` è la versione ottimizzata (R8,
+risorse ridotte), `discover-debug.apk` la versione di prova. Hanno la stessa firma e si installano
+l'una sopra l'altra. Il report lint e quello dei test sono nell'artifact `reports` della corsa.
 
 Il workflow esegue prima i test (`./gradlew testDebugUnitTest`), poi compila. Gli APK di debug sono
 firmati sempre con la stessa chiave pubblica (`app/debug.keystore`), così ogni nuova versione si

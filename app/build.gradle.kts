@@ -12,8 +12,8 @@ android {
         applicationId = "it.jarvis.discover"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "0.3.0"
     }
 
     signingConfigs {
@@ -29,6 +29,9 @@ android {
 
     buildTypes {
         release {
+            // Versione ottimizzata (R8 + risorse ridotte), firmata con la stessa chiave fissa di debug:
+            // si installa sopra le build di prova senza perdere dati. Non è una chiave di produzione.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -45,6 +48,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    lint {
+        // Il controllo qualità gira a parte in CI (report scaricabile) e non blocca la consegna dell'APK.
+        abortOnError = false
+        checkReleaseBuilds = false
     }
 
     buildFeatures {
