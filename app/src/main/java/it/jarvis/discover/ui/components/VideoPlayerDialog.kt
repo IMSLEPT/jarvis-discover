@@ -45,7 +45,7 @@ fun VideoPlayerDialog(item: VideoItem, onDismiss: () -> Unit) {
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().background(Color(0xFF0E0E0D)).safeDrawingPadding(),
+            modifier = Modifier.fillMaxSize().background(Color(0xFF050E20)).safeDrawingPadding(),
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 IconButton(onClick = onDismiss) {

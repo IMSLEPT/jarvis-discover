@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.SelfImprovement
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
@@ -54,9 +56,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import it.jarvis.discover.data.DiscoverViewModel
+import it.jarvis.discover.ui.components.BrandBackground
 import it.jarvis.discover.ui.components.EmojiBubble
 import it.jarvis.discover.ui.components.PhaseChip
 import it.jarvis.discover.ui.components.ScreenPadding
+import it.jarvis.discover.ui.components.Wordmark
 import it.jarvis.discover.ui.content.AudiobooksScreen
 import it.jarvis.discover.ui.content.BooksScreen
 import it.jarvis.discover.ui.content.MiniPlayer
@@ -123,8 +127,9 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
         }
     }
 
+    BrandBackground(Modifier.fillMaxSize()) {
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
         contentWindowInsets = if (edgeToEdge) WindowInsets(0.dp, 0.dp, 0.dp, 0.dp) else ScaffoldDefaults.contentWindowInsets,
         topBar = {
             if (isTab && !isVideo) {
@@ -191,9 +196,16 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                 OggiScreen(
                     modes = vm.modes,
                     minutes = vm.sessionMinutes,
+                    interests = vm.interests,
+                    acceptSubtitled = vm.acceptSubtitled,
+                    news = vm.news,
+                    videos = vm.videos,
+                    todayBook = vm.todayBook,
                     onMinutesChange = vm::updateSessionMinutes,
                     onOpenVideo = { openTab(Tab.Video) },
                     onOpenBenessere = { openTab(Tab.Benessere) },
+                    onOpenNews = { navController.navigate(ROUTE_NEWS) },
+                    onOpenBooks = { navController.navigate(ROUTE_BOOKS) },
                 )
             }
             composable(Tab.Scopri.route) {
@@ -241,6 +253,7 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
             }
         }
     }
+    }
 
     vm.videos.creators.page?.let { ref ->
         CreatorPage(
@@ -279,31 +292,26 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
 private fun DiscoverTopBar(onSearch: () -> Unit, onAssistant: () -> Unit, onSettings: () -> Unit) {
     TopAppBar(
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(
-                    imageVector = Icons.Rounded.AutoAwesome,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(22.dp),
-                )
-                Text("Discover", style = MaterialTheme.typography.titleLarge)
-            }
+            Wordmark()
         },
         actions = {
             IconButton(onClick = onSearch) { Icon(Icons.Rounded.Search, contentDescription = "Cerca") }
-            IconButton(onClick = onAssistant) { Icon(Icons.Rounded.AutoAwesome, contentDescription = "Assistente") }
+            IconButton(onClick = onAssistant) { Icon(Icons.Rounded.AutoAwesome, contentDescription = "Assistente", tint = MaterialTheme.colorScheme.secondary) }
             IconButton(onClick = onSettings) { Icon(Icons.Rounded.Settings, contentDescription = "Impostazioni") }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            scrolledContainerColor = MaterialTheme.colorScheme.background,
+            containerColor = Color.Transparent,
+            scrolledContainerColor = Color.Transparent,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
     )
 }
 
 @Composable
 private fun DiscoverBottomBar(currentRoute: String?, onSelect: (Tab) -> Unit) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+    Column {
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.96f), tonalElevation = 0.dp) {
         Tab.entries.forEach { tab ->
             NavigationBarItem(
                 selected = currentRoute == tab.route,
@@ -312,11 +320,14 @@ private fun DiscoverBottomBar(currentRoute: String?, onSelect: (Tab) -> Unit) {
                 label = { Text(tab.label, style = MaterialTheme.typography.labelSmall) },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
             )
         }
+    }
     }
 }
 

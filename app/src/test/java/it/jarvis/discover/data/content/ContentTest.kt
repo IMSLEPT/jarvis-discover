@@ -206,8 +206,8 @@ class ContentTest {
 
     @Test
     fun audiobookQueryIsSanitized() {
-        assertEquals("Dante Alighieri", AudiobookClient.sanitize("Dante\" OR (Alighieri*)"))
-            .let { }
+        // Virgolette, parentesi e asterischi (sintassi di ricerca) spariscono; restano solo parole.
+        assertEquals("Dante OR Alighieri", AudiobookClient.sanitize("Dante\" OR (Alighieri*)"))
     }
 
     @Test

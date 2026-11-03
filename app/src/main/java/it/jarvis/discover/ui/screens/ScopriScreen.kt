@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import it.jarvis.discover.data.InterestCategories
 import it.jarvis.discover.data.InterestCategory
@@ -46,8 +49,9 @@ import it.jarvis.discover.ui.components.PhaseChip
 import it.jarvis.discover.ui.components.ScreenPadding
 import it.jarvis.discover.ui.components.SectionTitle
 import it.jarvis.discover.ui.components.SoftCard
+import it.jarvis.discover.ui.theme.Palette
 
-private data class Shelf(val emoji: String, val title: String, val subtitle: String, val onOpen: () -> Unit)
+private data class Shelf(val emoji: String, val title: String, val subtitle: String, val gradient: List<Color>, val onOpen: () -> Unit)
 
 @Composable
 fun ScopriScreen(
@@ -62,12 +66,12 @@ fun ScopriScreen(
     onOpenVideos: () -> Unit,
 ) {
     val shelves = listOf(
-        Shelf("🌞", "Notizie", "Dalle testate italiane", onOpenNews),
-        Shelf("📚", "Libri", "Catalogo Open Library", onOpenBooks),
-        Shelf("🎧", "Podcast", "Apple Podcasts + feed", onOpenPodcasts),
-        Shelf("🎙️", "Audiolibri", "LibriVox in italiano", onOpenAudiobooks),
-        Shelf("🎤", "Creator ed esperti", "Cerca e segui", onOpenSearch),
-        Shelf("🎓", "Conferenze", "Nel feed Video", onOpenVideos),
+        Shelf("🌞", "Notizie", "Dalle testate italiane", listOf(Palette.OrangeDeep, Palette.OrangeLight), onOpenNews),
+        Shelf("📚", "Libri", "Catalogo Open Library", listOf(Palette.BlueDeep, Palette.BlueLight), onOpenBooks),
+        Shelf("🎧", "Podcast", "Apple Podcasts + feed", listOf(Palette.PlumDeep, Palette.PlumLight), onOpenPodcasts),
+        Shelf("🎙️", "Audiolibri", "LibriVox in italiano", listOf(Palette.Ink, Palette.InkLight), onOpenAudiobooks),
+        Shelf("🎤", "Creator ed esperti", "Cerca e segui", listOf(Palette.RoseDeep, Palette.RoseLight), onOpenSearch),
+        Shelf("🎓", "Conferenze", "Nel feed Video", listOf(Palette.TealDeep, Palette.TealLight), onOpenVideos),
     )
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -80,7 +84,8 @@ fun ScopriScreen(
                     .fillMaxWidth()
                     .height(54.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                     .clickable(onClick = onOpenSearch)
                     .padding(horizontal = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -152,14 +157,14 @@ private fun ShelfTile(shelf: Shelf, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .background(Brush.linearGradient(shelf.gradient))
             .clickable(onClick = shelf.onOpen)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        EmojiBubble(emoji = shelf.emoji, size = 44)
-        Text(shelf.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-        Text(shelf.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        EmojiBubble(emoji = shelf.emoji, size = 44, background = Color.White.copy(alpha = 0.2f))
+        Text(shelf.title, style = MaterialTheme.typography.titleSmall, color = Color.White)
+        Text(shelf.subtitle, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.9f))
     }
 }
 

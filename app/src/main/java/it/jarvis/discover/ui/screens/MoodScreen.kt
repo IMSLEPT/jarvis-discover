@@ -40,13 +40,14 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.jarvis.discover.data.Mood
 import it.jarvis.discover.data.Moods
+import it.jarvis.discover.ui.components.BrandHeadline
 import it.jarvis.discover.ui.components.EmojiBubble
 import it.jarvis.discover.ui.components.ScreenPadding
+import it.jarvis.discover.ui.components.Wordmark
 
 /**
  * Schermata d'apertura: "Di cosa hai bisogno oggi?".
@@ -59,15 +60,7 @@ fun MoodScreen(
     onContinue: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(scheme.primaryContainer.copy(alpha = 0.55f), scheme.background, scheme.background),
-                ),
-            ),
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -78,14 +71,11 @@ fun MoodScreen(
                 modifier = Modifier.padding(start = ScreenPadding, end = ScreenPadding, top = 28.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    text = "Di cosa hai bisogno oggi?",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = scheme.onBackground,
-                )
+                Wordmark(modifier = Modifier.padding(bottom = 10.dp))
+                BrandHeadline("Di cosa hai bisogno oggi?")
                 Text(
                     text = "Scegli una o più modalità, oppure entra direttamente nel tuo feed.",
-                    style = MaterialTheme.typography.bodyLarge.copy(fontStyle = FontStyle.Italic),
+                    style = MaterialTheme.typography.bodyLarge,
                     color = scheme.onSurfaceVariant,
                 )
             }
@@ -243,7 +233,7 @@ private fun SelectionDot(isSelected: Boolean) {
             Icon(
                 imageVector = Icons.Rounded.Check,
                 contentDescription = "Selezionato",
-                tint = Color(0xFF141413),
+                tint = Color(0xFF041937),
                 modifier = Modifier.size(16.dp),
             )
         }

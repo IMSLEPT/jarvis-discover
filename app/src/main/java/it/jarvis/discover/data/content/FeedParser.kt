@@ -49,7 +49,10 @@ object FeedParser {
         val title = clean(text(el, "title"))
         if (title.isBlank()) return null
         val link = text(el, "link").ifBlank { atomLink(el) }.trim()
-        val rawBody = text(el, "content:encoded").ifBlank { text(el, "description") }.ifBlank { text(el, "summary") }.ifBlank { text(el, "content") }
+        val full = text(el, "content:encoded")
+        // Il riassunto viene dalla descrizione breve; il testo completo serve solo come ripiego e per trovare l'immagine.
+        val rawBody = text(el, "description").ifBlank { text(el, "summary") }.ifBlank { full }.ifBlank { text(el, "content") }
+        val htmlForImage = full + " " + rawBody
         val enclosure = enclosure(el)
         val audio = enclosure?.takeIf { it.second.startsWith("audio") || it.first.substringBefore('?').lowercase().let { u -> u.endsWith(".mp3") || u.endsWith(".m4a") } }?.first
         val guid = text(el, "guid").ifBlank { text(el, "id") }.ifBlank { audio ?: link.ifBlank { title } }
@@ -59,7 +62,7 @@ object FeedParser {
             title = title,
             link = link,
             summary = clean(rawBody).take(SUMMARY_MAX),
-            imageUrl = image(el, rawBody, enclosure),
+            imageUrl = image(el, htmlForImage, enclosure),
             publishedMillis = date,
             audioUrl = audio?.takeIf { it.startsWith("http") },
             durationSec = parseDuration(text(el, "itunes:duration")),

@@ -96,7 +96,7 @@ import it.jarvis.discover.ui.theme.Palette
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-private val Night = Color(0xFF0E0E0D)
+private val Night = Color(0xFF050E20)
 private val SpeedSteps = listOf(1f, 1.25f, 1.5f, 1.75f, 2f, 0.75f)
 
 /** Sotto questo numero di video per un filtro, l'app cerca altri video di quel tipo. */

@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import it.jarvis.discover.data.backup.BackupManager
 import it.jarvis.discover.data.content.LibraryStore
 import it.jarvis.discover.data.content.NewsRepository
+import it.jarvis.discover.data.content.TodayBook
 import it.jarvis.discover.playback.AudioController
 import it.jarvis.discover.data.youtube.SecureStore
 import it.jarvis.discover.data.youtube.VideoFeed
@@ -66,6 +67,7 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
     val news = NewsRepository(app, viewModelScope)
     val library = LibraryStore(app)
     val audio = AudioController(app, viewModelScope, library)
+    val todayBook = TodayBook(app, viewModelScope)
 
     /** Vero dopo che l'utente ha completato (o saltato) la scelta iniziale degli interessi. */
     var onboardingDone by mutableStateOf(prefs.getBoolean(KEY_ONBOARDED, false))

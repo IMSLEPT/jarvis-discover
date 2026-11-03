@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="window_background">#FAF9F5</color>
-    <color name="splash_background">#141413</color>
+    <color name="window_background">#FBFAFC</color>
+    <color name="splash_background">#050E20</color>
     <!-- Lo splash è sempre chiaro: il nome "Discover" dell'icona è blu notte e su fondo scuro non si leggerebbe. -->
-    <color name="splash_light">#FAF9FD</color>
+    <color name="splash_light">#FBFAFC</color>
 </resources>

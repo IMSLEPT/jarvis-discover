@@ -34,13 +34,13 @@ val ScreenPadding = 20.dp
 fun SampleBadge(modifier: Modifier = Modifier, text: String = "ANTEPRIMA") {
     Box(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(50))
             .padding(horizontal = 8.dp, vertical = 3.dp),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
         )
     }
 }
@@ -79,6 +79,7 @@ fun SoftCard(
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Box(Modifier.padding(contentPadding)) { content() }
     }
@@ -121,7 +122,10 @@ fun EmptyState(emoji: String, title: String, body: String, modifier: Modifier = 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        EmojiBubble(emoji = emoji, size = 72)
+        Box(contentAlignment = Alignment.Center) {
+            BrandRing(size = 96.dp, thickness = 0.06f)
+            EmojiBubble(emoji = emoji, size = 56, background = MaterialTheme.colorScheme.surfaceContainerLowest)
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
