@@ -113,7 +113,7 @@ private fun PlayerSheet(audio: AudioController, onDismiss: () -> Unit) {
             }
             Text("Velocità", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Speeds.forEach { s -> FilterChip(selected = audio.speed == s, onClick = { audio.setSpeed(s) }, label = { Text("${s}x") }, shape = CircleShape) }
+                Speeds.forEach { s -> FilterChip(selected = audio.speed == s, onClick = { audio.changeSpeed(s) }, label = { Text("${s}x") }, shape = CircleShape) }
             }
             Text(
                 if (audio.sleepMinutesLeft > 0) "Timer di spegnimento: ${audio.sleepMinutesLeft} min" else "Timer di spegnimento",

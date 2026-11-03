@@ -119,7 +119,7 @@ class AudioController(
     fun next() { controller?.seekToNextMediaItem() }
     fun previous() { controller?.seekToPreviousMediaItem() }
 
-    fun setSpeed(value: Float) {
+    fun changeSpeed(value: Float) {
         speed = value
         controller?.setPlaybackSpeed(value)
     }
