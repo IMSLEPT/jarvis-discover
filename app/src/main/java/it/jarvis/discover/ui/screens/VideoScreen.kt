@@ -377,8 +377,17 @@ private fun VideoPage(
                 onHide = onHide,
             )
 
+            Text(
+                text = "Il video non si vede? Aprilo su YouTube",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White.copy(alpha = 0.72f),
+                modifier = Modifier
+                    .padding(horizontal = ScreenPadding, vertical = 6.dp)
+                    .clickable(onClick = onOpenYouTube),
+            )
+
             Column(
-                modifier = Modifier.padding(horizontal = ScreenPadding).padding(top = 16.dp),
+                modifier = Modifier.padding(horizontal = ScreenPadding).padding(top = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

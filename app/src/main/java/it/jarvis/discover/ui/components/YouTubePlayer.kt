@@ -80,6 +80,14 @@ fun YouTubePlayer(
         factory = { context ->
             WebView(context).apply {
                 setBackgroundColor(android.graphics.Color.BLACK)
+                // Il video usa il rendering hardware; il tema scuro automatico della WebView può oscurare il riquadro del video.
+                setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+                if (android.os.Build.VERSION.SDK_INT >= 33) {
+                    settings.isAlgorithmicDarkeningAllowed = false
+                } else if (android.os.Build.VERSION.SDK_INT >= 29) {
+                    @Suppress("DEPRECATION")
+                    settings.forceDark = android.webkit.WebSettings.FORCE_DARK_OFF
+                }
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.mediaPlaybackRequiresUserGesture = false
