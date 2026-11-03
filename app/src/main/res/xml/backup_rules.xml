@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La chiave API è cifrata con una chiave del telefono che non si può copiare altrove:
+     non ha senso includerla nei backup. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="secure_store.xml" />
+</full-backup-content>

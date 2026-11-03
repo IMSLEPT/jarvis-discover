@@ -11,4 +11,7 @@
 *.aab
 *.jks
 *.keystore
+# Chiave di firma di DEBUG, pubblica per scelta: serve a firmare sempre allo stesso modo le build
+# di sviluppo, così ogni nuovo APK si installa sopra il precedente senza perdere i dati.
+!app/debug.keystore
 **/build/

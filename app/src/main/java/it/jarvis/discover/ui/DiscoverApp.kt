@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.CollectionsBookmark
@@ -24,22 +23,22 @@ import androidx.compose.material.icons.rounded.SelfImprovement
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,7 +54,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import it.jarvis.discover.data.DiscoverViewModel
-import it.jarvis.discover.data.ThemeMode
 import it.jarvis.discover.ui.components.EmojiBubble
 import it.jarvis.discover.ui.components.PhaseChip
 import it.jarvis.discover.ui.components.ScreenPadding
@@ -194,10 +192,20 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                     onManageInterests = { navController.navigate(ROUTE_INTERESTS) },
                 )
             }
-            composable(Tab.Video.route) { VideoScreen() }
+            composable(Tab.Video.route) {
+                VideoScreen(
+                    feed = vm.videos,
+                    modes = vm.modes,
+                    interests = vm.interests,
+                    acceptSubtitled = vm.acceptSubtitled,
+                    onOpenSettings = { sheet = AppSheet.Settings },
+                )
+            }
             composable(Tab.Benessere.route) { BenessereScreen(onSaveGratitude = vm::addGratitude) }
             composable(Tab.Raccolta.route) {
                 RaccoltaScreen(
+                    savedVideos = vm.videos.saved,
+                    onRemoveVideo = vm.videos::toggleSave,
                     gratitude = vm.gratitude,
                     onDeleteGratitude = vm::deleteGratitude,
                     interests = vm.interests,
@@ -209,21 +217,25 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
     }
 
     sheet?.let { current ->
-        ModalBottomSheet(onDismissRequest = { sheet = null }) {
-            when (current) {
-                AppSheet.Search -> ComingSoonSheet(
-                    emoji = "🔎",
-                    title = "Ricerca universale",
-                    body = "Cercherai persone, canali, argomenti e conferenze da un unico posto, con filtri per durata, lingua e popolarità.",
-                    phase = 4,
-                )
-                AppSheet.Assistant -> ComingSoonSheet(
-                    emoji = "✨",
-                    title = "Il tuo assistente",
-                    body = "Potrai chiedergli di trovare video, libri e notizie reali, spiegarti un contenuto o guidarti in cinque minuti di mindfulness.",
-                    phase = 8,
-                )
-                AppSheet.Settings -> SettingsSheet(vm)
+        key(current) {
+            // Le impostazioni contengono un campo di testo: si aprono subito a tutta altezza.
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = current == AppSheet.Settings)
+            ModalBottomSheet(onDismissRequest = { sheet = null }, sheetState = sheetState) {
+                when (current) {
+                    AppSheet.Search -> ComingSoonSheet(
+                        emoji = "🔎",
+                        title = "Ricerca universale",
+                        body = "Cercherai persone, canali, argomenti e conferenze da un unico posto, con filtri per durata, lingua e popolarità.",
+                        phase = 4,
+                    )
+                    AppSheet.Assistant -> ComingSoonSheet(
+                        emoji = "✨",
+                        title = "Il tuo assistente",
+                        body = "Potrai chiedergli di trovare video, libri e notizie reali, spiegarti un contenuto o guidarti in cinque minuti di mindfulness.",
+                        phase = 8,
+                    )
+                    AppSheet.Settings -> SettingsSheet(vm)
+                }
             }
         }
     }
@@ -292,55 +304,5 @@ private fun ComingSoonSheet(emoji: String, title: String, body: String, phase: I
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         PhaseChip(phase)
-    }
-}
-
-@Composable
-private fun SettingsSheet(vm: DiscoverViewModel) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = ScreenPadding)
-            .padding(bottom = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        Text("Impostazioni", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
-
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Aspetto", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ThemeMode.entries.forEach { mode ->
-                    FilterChip(
-                        selected = vm.themeMode == mode,
-                        onClick = { vm.updateThemeMode(mode) },
-                        label = { Text(mode.label, style = MaterialTheme.typography.labelLarge) },
-                        shape = CircleShape,
-                    )
-                }
-            }
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Lingua dei contenuti", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        "Accetta video stranieri sottotitolati",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        "Se disattivato, vedrai solo contenuti parlati in italiano o doppiati.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(checked = vm.acceptSubtitled, onCheckedChange = vm::updateAcceptSubtitled)
-            }
-        }
     }
 }

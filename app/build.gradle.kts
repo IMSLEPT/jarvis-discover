@@ -16,6 +16,17 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        // Chiave di debug fissa e pubblica: le build di sviluppo hanno sempre la stessa firma,
+        // quindi ogni APK si installa sopra il precedente senza cancellare i dati dell'app.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -61,5 +72,12 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
 
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.kotlinx.coroutines.android)
+
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.org.json)
 }

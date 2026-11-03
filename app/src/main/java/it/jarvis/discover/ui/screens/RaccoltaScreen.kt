@@ -1,5 +1,22 @@
 package it.jarvis.discover.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.BookmarkRemove
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
+import coil3.compose.AsyncImage
+import it.jarvis.discover.data.youtube.Format
+import it.jarvis.discover.data.youtube.VideoItem
+import it.jarvis.discover.ui.components.VideoPlayerDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -48,6 +65,8 @@ private val CollectionTabs = listOf("Video", "Libri", "Diario", "Creator", "Inte
 
 @Composable
 fun RaccoltaScreen(
+    savedVideos: List<VideoItem>,
+    onRemoveVideo: (VideoItem) -> Unit,
     gratitude: List<GratitudeEntry>,
     onDeleteGratitude: (GratitudeEntry) -> Unit,
     interests: List<String>,
@@ -55,6 +74,7 @@ fun RaccoltaScreen(
     onManageInterests: () -> Unit,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    var playing by remember { mutableStateOf<VideoItem?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -85,11 +105,7 @@ fun RaccoltaScreen(
         }
 
         when (tab) {
-            0 -> EmptyState(
-                emoji = "🔖",
-                title = "Nessun video salvato",
-                body = "Tocca il segnalibro su un video del feed per ritrovarlo qui.",
-            )
+            0 -> SavedVideos(savedVideos, onPlay = { playing = it }, onRemove = onRemoveVideo)
             1 -> EmptyState(
                 emoji = "📚",
                 title = "La tua libreria è vuota",
@@ -104,6 +120,8 @@ fun RaccoltaScreen(
             else -> InterestsTab(interests, onRemoveInterest, onManageInterests)
         }
     }
+
+    playing?.let { VideoPlayerDialog(item = it, onDismiss = { playing = null }) }
 }
 
 @Composable
@@ -239,6 +257,75 @@ private fun DiaryList(entries: List<GratitudeEntry>, onDelete: (GratitudeEntry) 
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(end = 12.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SavedVideos(videos: List<VideoItem>, onPlay: (VideoItem) -> Unit, onRemove: (VideoItem) -> Unit) {
+    if (videos.isEmpty()) {
+        EmptyState(
+            emoji = "🔖",
+            title = "Nessun video salvato",
+            body = "Tocca «Salva» su un video del feed per ritrovarlo qui.",
+        )
+        return
+    }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 16.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(videos, key = { it.id }) { video ->
+            SoftCard(contentPadding = PaddingValues(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable { onPlay(video) },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Box(modifier = Modifier.width(128.dp).aspectRatio(16f / 9f).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                        AsyncImage(
+                            model = video.thumbnail,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        Text(
+                            text = Format.duration(video.durationSec),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(4.dp)
+                                .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 4.dp, vertical = 1.dp),
+                        )
+                    }
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            video.title,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            video.channelTitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    IconButton(onClick = { onRemove(video) }) {
+                        Icon(
+                            imageVector = Icons.Rounded.BookmarkRemove,
+                            contentDescription = "Rimuovi dalla raccolta",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }

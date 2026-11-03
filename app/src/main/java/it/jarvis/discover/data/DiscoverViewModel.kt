@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import it.jarvis.discover.data.youtube.VideoFeed
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -48,6 +50,9 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
         private set
 
     val gratitude = mutableStateListOf<GratitudeEntry>()
+
+    /** Video reali da YouTube: chiave cifrata, feed, salvati e preferenze. */
+    val videos = VideoFeed(app, viewModelScope)
 
     /** Vero dopo che l'utente ha completato (o saltato) la scelta iniziale degli interessi. */
     var onboardingDone by mutableStateOf(prefs.getBoolean(KEY_ONBOARDED, false))
