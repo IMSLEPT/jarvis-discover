@@ -60,6 +60,10 @@ object ItalianText {
     private val trailing = Regex(
         "\\s+(?:in italiano|in lingua italiana|in lingua|oggi|adesso|ora|subito|per favore|per piacere|grazie|di oggi|in\\s+" + numberPattern + "\\s+minut\\w*)$",
     )
+    private val genericNouns = setOf(
+        "video", "libri", "libro", "notizie", "notizia", "podcast", "audiolibri", "audiolibro", "talk", "ted", "ted talks", "ted talk",
+        "conferenze", "conferenza", "interviste", "intervista", "lezioni", "lezione", "discorsi", "discorso", "cose", "cosa",
+    )
     private val leadingArticle = Regex("^(?:l'|un'|(?:il|lo|la|i|gli|le|un|uno|una)\\s+)")
     // Le preposizioni con apostrofo si attaccano alla parola ("sull'ai"); le altre richiedono uno spazio ("sulla mente").
     private val prepositions = Regex(
@@ -83,6 +87,8 @@ object ItalianText {
             changed = t != before
         }
         t = leadingArticle.replace(t, "").trim()
+        // «dei video», «delle notizie»: nomi di contenuto, non argomenti
+        if (t in genericNouns) return null
         return t.takeIf { it.length >= 2 }
     }
 

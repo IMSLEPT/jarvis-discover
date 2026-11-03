@@ -139,29 +139,24 @@ class GeminiClient(private val http: HttpRequester = UrlConnectionRequester) {
             out to o.optString("nextPageToken").ifBlank { null }
         }.getOrDefault(emptyList<String>() to null)
 
-        /**
-         * Sceglie il modello: prima quelli preferiti, poi il Flash stabile più recente (senza anteprime, live, immagini…).
-         * Null se non c'è nulla di adatto.
-         */
-        fun pickModel(available: List<String>): String? {
-            PREFERRED.firstOrNull { it in available }?.let { return it }
-            val stable = available.filter { id -> EXCLUDED.none { it in id } }.mapNotNull { id ->
+        /** Modelli Flash stabili (senza anteprime, live, immagini…) dal più recente; a parità di versione prima quello non «lite». */
+        private fun stableRanked(available: List<String>): List<String> =
+            available.filter { id -> EXCLUDED.none { it in id } }.mapNotNull { id ->
                 STABLE_FLASH.matchEntire(id)?.let { m ->
                     val major = m.groupValues[1].toInt()
                     val minor = m.groupValues[2].toIntOrNull() ?: 0
                     Triple(id, major * 100 + minor, m.groupValues[3].isEmpty())
                 }
-            }
-            return stable.sortedWith(compareByDescending<Triple<String, Int, Boolean>> { it.second }.thenByDescending { it.third }).firstOrNull()?.first
-        }
+            }.sortedWith(compareByDescending<Triple<String, Int, Boolean>> { it.second }.thenByDescending { it.third }).map { it.first }
 
-        /** Altri modelli utilizzabili, nell'ordine in cui provarli se il primo non va. */
+        /** Sceglie il modello: prima quelli preferiti, poi il Flash stabile più recente. Null se non c'è nulla di adatto. */
+        fun pickModel(available: List<String>): String? =
+            PREFERRED.firstOrNull { it in available } ?: stableRanked(available).firstOrNull()
+
+        /** Modelli utilizzabili nell'ordine in cui provarli. */
         fun candidates(available: List<String>): List<String> {
             val preferred = PREFERRED.filter { it in available }
-            val rest = available.filter { id ->
-                id !in preferred && EXCLUDED.none { it in id } && STABLE_FLASH.matches(id)
-            }.sortedDescending()
-            return preferred + rest
+            return preferred + stableRanked(available).filter { it !in preferred }
         }
 
         fun parseGenerate(json: String): GeminiResult<String> = runCatching {
