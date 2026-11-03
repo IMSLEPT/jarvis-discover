@@ -105,11 +105,13 @@ fun SettingsSheet(vm: DiscoverViewModel) {
         }
 
         YouTubeKeySection(vm.videos)
+
+        BackupSection(vm.backup)
     }
 }
 
 @Composable
-private fun SectionLabel(text: String) {
+internal fun SectionLabel(text: String) {
     Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 }
 

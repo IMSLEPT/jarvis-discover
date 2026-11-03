@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import it.jarvis.discover.data.backup.BackupManager
+import it.jarvis.discover.data.youtube.SecureStore
 import it.jarvis.discover.data.youtube.VideoFeed
 import org.json.JSONArray
 import org.json.JSONObject
@@ -53,6 +55,9 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Video reali da YouTube: chiave cifrata, feed, salvati e preferenze. */
     val videos = VideoFeed(app, viewModelScope)
+
+    /** Backup cifrato con passphrase: preferenze e chiavi API in un file che scegli tu dove salvare. */
+    val backup = BackupManager(app, SecureStore(app))
 
     /** Vero dopo che l'utente ha completato (o saltato) la scelta iniziale degli interessi. */
     var onboardingDone by mutableStateOf(prefs.getBoolean(KEY_ONBOARDED, false))

@@ -28,6 +28,12 @@ object Format {
         LocalDate.parse(iso.take(10)).format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ITALIAN))
     }.getOrDefault("")
 
+    /** Data e ora locali: "3 nov 2026, 14:05". */
+    fun dateTime(epochMillis: Long): String = runCatching {
+        java.time.Instant.ofEpochMilli(epochMillis).atZone(java.time.ZoneId.systemDefault())
+            .format(DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.ITALIAN))
+    }.getOrDefault("")
+
     /** Giorno (aaaa-mm-gg) nel fuso del Pacifico: è lì che YouTube azzera la quota. */
     fun pacificDay(epochMillis: Long): String {
         val zone = TimeZone.getTimeZone("America/Los_Angeles").toZoneId()
