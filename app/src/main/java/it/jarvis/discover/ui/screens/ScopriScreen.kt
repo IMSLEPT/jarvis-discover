@@ -47,16 +47,7 @@ import it.jarvis.discover.ui.components.ScreenPadding
 import it.jarvis.discover.ui.components.SectionTitle
 import it.jarvis.discover.ui.components.SoftCard
 
-private data class Shelf(val emoji: String, val title: String, val phase: Int)
-
-private val Shelves = listOf(
-    Shelf("🌞", "Notizie positive", 5),
-    Shelf("📚", "Libri", 5),
-    Shelf("🎧", "Podcast", 5),
-    Shelf("🎤", "Creator ed esperti", 4),
-    Shelf("🎓", "Conferenze", 3),
-    Shelf("✨", "Nuove scoperte", 7),
-)
+private data class Shelf(val emoji: String, val title: String, val subtitle: String, val onOpen: () -> Unit)
 
 @Composable
 fun ScopriScreen(
@@ -64,7 +55,20 @@ fun ScopriScreen(
     onToggleTopic: (String) -> Unit,
     onOpenSearch: () -> Unit,
     onManageInterests: () -> Unit,
+    onOpenNews: () -> Unit,
+    onOpenBooks: () -> Unit,
+    onOpenPodcasts: () -> Unit,
+    onOpenAudiobooks: () -> Unit,
+    onOpenVideos: () -> Unit,
 ) {
+    val shelves = listOf(
+        Shelf("🌞", "Notizie", "Dalle testate italiane", onOpenNews),
+        Shelf("📚", "Libri", "Catalogo Open Library", onOpenBooks),
+        Shelf("🎧", "Podcast", "Apple Podcasts + feed", onOpenPodcasts),
+        Shelf("🎙️", "Audiolibri", "LibriVox in italiano", onOpenAudiobooks),
+        Shelf("🎤", "Creator ed esperti", "Cerca e segui", onOpenSearch),
+        Shelf("🎓", "Conferenze", "Nel feed Video", onOpenVideos),
+    )
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 28.dp),
@@ -123,7 +127,7 @@ fun ScopriScreen(
         item(key = "shelves-title") {
             SectionTitle(title = "Cosa vuoi scoprire?")
         }
-        items(Shelves.chunked(2), key = { row -> row.first().title }) { row ->
+        items(shelves.chunked(2), key = { row -> row.first().title }) { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 row.forEach { shelf -> ShelfTile(shelf, Modifier.weight(1f)) }
                 if (row.size == 1) Box(Modifier.weight(1f))
@@ -149,12 +153,13 @@ private fun ShelfTile(shelf: Shelf, modifier: Modifier = Modifier) {
         modifier = modifier
             .clip(MaterialTheme.shapes.large)
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .clickable(onClick = shelf.onOpen)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         EmojiBubble(emoji = shelf.emoji, size = 44)
         Text(shelf.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-        PhaseChip(shelf.phase)
+        Text(shelf.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

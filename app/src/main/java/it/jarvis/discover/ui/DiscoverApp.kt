@@ -57,6 +57,11 @@ import it.jarvis.discover.data.DiscoverViewModel
 import it.jarvis.discover.ui.components.EmojiBubble
 import it.jarvis.discover.ui.components.PhaseChip
 import it.jarvis.discover.ui.components.ScreenPadding
+import it.jarvis.discover.ui.content.AudiobooksScreen
+import it.jarvis.discover.ui.content.BooksScreen
+import it.jarvis.discover.ui.content.MiniPlayer
+import it.jarvis.discover.ui.content.NewsScreen
+import it.jarvis.discover.ui.content.PodcastsScreen
 import it.jarvis.discover.ui.creators.CreatorPage
 import it.jarvis.discover.ui.search.SearchSheet
 import it.jarvis.discover.ui.screens.BenessereScreen
@@ -70,6 +75,10 @@ import it.jarvis.discover.ui.screens.VideoScreen
 private const val ROUTE_MOOD = "mood"
 private const val ROUTE_ONBOARDING = "interessi_iniziali"
 private const val ROUTE_INTERESTS = "interessi"
+private const val ROUTE_NEWS = "notizie"
+private const val ROUTE_BOOKS = "libri"
+private const val ROUTE_PODCASTS = "podcast"
+private const val ROUTE_AUDIOBOOKS = "audiolibri"
 
 /** Schermate a tutto schermo che gestiscono da sole i margini di sistema. */
 private val FullScreenRoutes by lazy { setOf(ROUTE_MOOD, ROUTE_ONBOARDING, ROUTE_INTERESTS, Tab.Video.route) }
@@ -127,8 +136,9 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
             }
         },
         bottomBar = {
-            if (isTab) {
-                DiscoverBottomBar(currentRoute = route, onSelect = ::openTab)
+            Column {
+                if (route != ROUTE_MOOD && route != ROUTE_ONBOARDING) MiniPlayer(vm.audio)
+                if (isTab) DiscoverBottomBar(currentRoute = route, onSelect = ::openTab)
             }
         },
     ) { padding ->
@@ -192,8 +202,17 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                     onToggleTopic = vm::toggleInterest,
                     onOpenSearch = { sheet = AppSheet.Search },
                     onManageInterests = { navController.navigate(ROUTE_INTERESTS) },
+                    onOpenNews = { navController.navigate(ROUTE_NEWS) },
+                    onOpenBooks = { navController.navigate(ROUTE_BOOKS) },
+                    onOpenPodcasts = { navController.navigate(ROUTE_PODCASTS) },
+                    onOpenAudiobooks = { navController.navigate(ROUTE_AUDIOBOOKS) },
+                    onOpenVideos = { openTab(Tab.Video) },
                 )
             }
+            composable(ROUTE_NEWS) { NewsScreen(vm.news, onBack = { navController.popBackStack() }) }
+            composable(ROUTE_BOOKS) { BooksScreen(vm.library, vm.interests, onBack = { navController.popBackStack() }) }
+            composable(ROUTE_PODCASTS) { PodcastsScreen(vm.library, vm.audio, vm.interests, onBack = { navController.popBackStack() }) }
+            composable(ROUTE_AUDIOBOOKS) { AudiobooksScreen(vm.library, vm.audio, onBack = { navController.popBackStack() }) }
             composable(Tab.Video.route) {
                 VideoScreen(
                     feed = vm.videos,
@@ -216,6 +235,8 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                     onManageInterests = { navController.navigate(ROUTE_INTERESTS) },
                     follows = vm.videos.creators.follows,
                     onOpenCreator = vm.videos.creators::open,
+                    library = vm.library,
+                    audio = vm.audio,
                 )
             }
         }

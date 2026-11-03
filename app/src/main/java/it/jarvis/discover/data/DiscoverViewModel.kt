@@ -10,6 +10,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import it.jarvis.discover.data.backup.BackupManager
+import it.jarvis.discover.data.content.LibraryStore
+import it.jarvis.discover.data.content.NewsRepository
+import it.jarvis.discover.playback.AudioController
 import it.jarvis.discover.data.youtube.SecureStore
 import it.jarvis.discover.data.youtube.VideoFeed
 import org.json.JSONArray
@@ -58,6 +61,11 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Backup cifrato con passphrase: preferenze e chiavi API in un file che scegli tu dove salvare. */
     val backup = BackupManager(app, SecureStore(app))
+
+    /** Notizie reali dai feed RSS, scaffali dei libri, podcast seguiti e lettore audio. */
+    val news = NewsRepository(app, viewModelScope)
+    val library = LibraryStore(app)
+    val audio = AudioController(app, viewModelScope, library)
 
     /** Vero dopo che l'utente ha completato (o saltato) la scelta iniziale degli interessi. */
     var onboardingDone by mutableStateOf(prefs.getBoolean(KEY_ONBOARDED, false))
@@ -187,5 +195,10 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
         const val KEY_INTERESTS = "interests"
         const val KEY_CUSTOM = "custom_topics"
         const val MAX_TOPIC_LENGTH = 60
+    }
+
+    override fun onCleared() {
+        audio.release()
+        super.onCleared()
     }
 }
