@@ -49,6 +49,36 @@ private class PlayerBridge(
     }
 }
 
+/**
+ * Modi di riproduzione. Il video può risultare nero su alcuni telefoni a seconda di come la WebView di sistema lo disegna:
+ * invece di indovinare, l'utente può cambiare metodo (la scelta resta salvata).
+ */
+object PlayerModes {
+    const val IFRAME = 0   // player YouTube con controlli dell'app (velocità, sottotitoli, fine video)
+    const val EMBED = 1    // pagina di incorporamento di YouTube caricata direttamente
+    const val WATCH = 2    // pagina di YouTube per cellulari dentro la WebView
+    const val COUNT = 3
+
+    val labels = listOf("Standard", "Alternativo", "Pagina YouTube")
+
+    private const val PREFS = "discover_player"
+    private const val KEY = "mode"
+
+    fun load(context: android.content.Context): Int =
+        context.applicationContext.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).getInt(KEY, IFRAME).coerceIn(0, COUNT - 1)
+
+    fun save(context: android.content.Context, mode: Int) {
+        context.applicationContext.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit().putInt(KEY, mode).apply()
+    }
+
+    fun embedUrl(videoId: String, captions: Boolean): String? =
+        if (!PlayerHtml.isValidId(videoId)) null
+        else "https://www.youtube.com/embed/$videoId?autoplay=1&playsinline=1&rel=0&fs=0&hl=it&cc_lang_pref=it&cc_load_policy=${if (captions) 1 else 0}&origin=${PlayerHtml.ORIGIN}"
+
+    fun watchUrl(videoId: String): String? =
+        if (!PlayerHtml.isValidId(videoId)) null else "https://m.youtube.com/watch?v=$videoId"
+}
+
 /** Stati del player che interessano all'app (valori di YT.PlayerState). */
 object PlayerState {
     const val ENDED = 0
@@ -65,6 +95,7 @@ fun YouTubePlayer(
     modifier: Modifier = Modifier,
     captions: Boolean = false,
     speed: Float = 1f,
+    mode: Int = PlayerModes.IFRAME,
     onError: (Int) -> Unit = {},
     onEnded: () -> Unit = {},
 ) {
@@ -80,8 +111,7 @@ fun YouTubePlayer(
         factory = { context ->
             WebView(context).apply {
                 setBackgroundColor(android.graphics.Color.BLACK)
-                // Il video usa il rendering hardware; il tema scuro automatico della WebView può oscurare il riquadro del video.
-                setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+                // Nessun tipo di layer forzato (Google lo sconsiglia per le WebView) e tema scuro automatico spento.
                 if (android.os.Build.VERSION.SDK_INT >= 33) {
                     settings.isAlgorithmicDarkeningAllowed = false
                 } else if (android.os.Build.VERSION.SDK_INT >= 29) {
@@ -95,7 +125,7 @@ fun YouTubePlayer(
                 webViewClient = object : WebViewClient() {
                     // Il player non deve mai portare la pagina altrove (es. toccando il logo).
                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean =
-                        request?.isForMainFrame == true
+                        mode != PlayerModes.WATCH && request?.isForMainFrame == true
                 }
                 addJavascriptInterface(
                     PlayerBridge(
@@ -105,9 +135,14 @@ fun YouTubePlayer(
                     ),
                     "Android",
                 )
-                PlayerHtml.build(videoId, captions)?.let {
-                    loadDataWithBaseURL("${PlayerHtml.ORIGIN}/", it, "text/html", "utf-8", null)
-                } ?: latestOnError(-1)
+                when (mode) {
+                    PlayerModes.EMBED -> PlayerModes.embedUrl(videoId, captions)
+                        ?.let { loadUrl(it, mapOf("Referer" to "${PlayerHtml.ORIGIN}/")) } ?: latestOnError(-1)
+                    PlayerModes.WATCH -> PlayerModes.watchUrl(videoId)?.let { loadUrl(it) } ?: latestOnError(-1)
+                    else -> PlayerHtml.build(videoId, captions)?.let {
+                        loadDataWithBaseURL("${PlayerHtml.ORIGIN}/", it, "text/html", "utf-8", null)
+                    } ?: latestOnError(-1)
+                }
                 webView = this
             }
         },
@@ -125,7 +160,7 @@ fun YouTubePlayer(
 
     LaunchedEffect(captions, webView) {
         val view = webView ?: return@LaunchedEffect
-        if (captions == appliedCaptions) return@LaunchedEffect
+        if (mode != PlayerModes.IFRAME || captions == appliedCaptions) return@LaunchedEffect
         appliedCaptions = captions
         view.evaluateJavascript("getTime()") { value ->
             val start = value?.toDoubleOrNull()?.toInt() ?: 0
@@ -139,11 +174,9 @@ fun YouTubePlayer(
         val observer = LifecycleEventObserver { _, event ->
             val view = webView ?: return@LifecycleEventObserver
             when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    view.evaluateJavascript("pauseVideo()", null)
-                    view.onPause()
-                }
-                Lifecycle.Event.ON_RESUME -> view.onResume()
+                Lifecycle.Event.ON_PAUSE -> view.evaluateJavascript("pauseVideo()", null)
+                Lifecycle.Event.ON_STOP -> view.onPause()
+                Lifecycle.Event.ON_START -> view.onResume()
                 else -> Unit
             }
         }

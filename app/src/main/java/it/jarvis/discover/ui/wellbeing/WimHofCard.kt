@@ -157,12 +157,11 @@ fun WimHofCard(player: WimHofPlayer, entries: List<Activity>, onBeforeStart: () 
                         Text("Inizia l'allenamento", style = MaterialTheme.typography.titleSmall)
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        TextButton(onClick = { openUrl(context, "https://wimhofmethod.com/safety-warnings") }) { Text("Avvertenze ufficiali") }
-                        TextButton(onClick = { openUrl(context, "https://livescience.com/health/gambling-with-your-life-experts-weigh-in-on-dangers-of-the-wim-hof-method") }) { Text("Parere degli esperti") }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        TextButton(onClick = { openUrl(context, "https://www.healthline.com/health/wim-hof-method") }) { Text("Chi dovrebbe evitarlo") }
+                    Text("Fonti", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Column {
+                        TextButton(onClick = { openUrl(context, "https://wimhofmethod.com/safety-warnings") }) { Text("Avvertenze ufficiali del metodo") }
+                        TextButton(onClick = { openUrl(context, "https://livescience.com/health/gambling-with-your-life-experts-weigh-in-on-dangers-of-the-wim-hof-method") }) { Text("Parere degli esperti sui rischi (Live Science)") }
+                        TextButton(onClick = { openUrl(context, "https://www.healthline.com/health/wim-hof-method") }) { Text("Chi dovrebbe evitarlo (Healthline)") }
                         TextButton(onClick = { openUrl(context, "https://pmc.ncbi.nlm.nih.gov/articles/PMC10936795/") }) { Text("Revisione degli studi") }
                     }
                 }
@@ -247,9 +246,9 @@ private fun WimHofDialog(player: WimHofPlayer) {
                     IconButton(onClick = player::stop) { Icon(Icons.Rounded.Close, contentDescription = "Ferma e chiudi") }
                 }
                 if (run.finished) {
-                    Finished(run, onClose = player::stop)
+                    Finished(run, onClose = player::stop, modifier = Modifier.weight(1f).fillMaxWidth())
                 } else {
-                    Running(run, onEndHold = player::endHold, onStop = player::stop)
+                    Running(run, onEndHold = player::endHold, onStop = player::stop, modifier = Modifier.weight(1f).fillMaxWidth())
                 }
             }
         }
@@ -257,8 +256,8 @@ private fun WimHofDialog(player: WimHofPlayer) {
 }
 
 @Composable
-private fun Running(run: WimHofRun, onEndHold: () -> Unit, onStop: () -> Unit) {
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+private fun Running(run: WimHofRun, onEndHold: () -> Unit, onStop: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Text(
                 "Giro ${run.round} di ${run.level.rounds}",
@@ -316,9 +315,9 @@ private fun Running(run: WimHofRun, onEndHold: () -> Unit, onStop: () -> Unit) {
 }
 
 @Composable
-private fun Finished(run: WimHofRun, onClose: () -> Unit) {
+private fun Finished(run: WimHofRun, onClose: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        modifier.verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

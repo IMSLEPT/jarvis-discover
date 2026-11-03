@@ -61,6 +61,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -89,6 +90,7 @@ import it.jarvis.discover.data.youtube.VideoItem
 import it.jarvis.discover.data.youtube.YtErrorKind
 import it.jarvis.discover.ui.components.EmojiBubble
 import it.jarvis.discover.ui.components.ScreenPadding
+import it.jarvis.discover.ui.components.PlayerModes
 import it.jarvis.discover.ui.components.YouTubePlayer
 import it.jarvis.discover.ui.components.openUrl
 import it.jarvis.discover.ui.components.shareText
@@ -126,6 +128,7 @@ fun VideoScreen(
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    var playerMode by remember { mutableIntStateOf(PlayerModes.load(context)) }
 
     LaunchedEffect(feed.hasKey, feed.keyVersion) {
         if (feed.hasKey) feed.refresh(modes, interests)
@@ -194,6 +197,12 @@ fun VideoScreen(
                     why = feed.whyThis(item),
                     isCurrent = page == pager.settledPage,
                     speed = speed,
+                    playerMode = playerMode,
+                    onNextMode = {
+                        playerMode = (playerMode + 1) % PlayerModes.COUNT
+                        PlayerModes.save(context, playerMode)
+                        say("Metodo di riproduzione: ${PlayerModes.labels[playerMode]}")
+                    },
                     liked = feed.isLiked(item.id),
                     saved = feed.isSaved(item.id),
                     onCycleSpeed = { speed = SpeedSteps[(SpeedSteps.indexOf(speed) + 1).mod(SpeedSteps.size)] },
@@ -331,6 +340,8 @@ private fun VideoPage(
     why: List<String>,
     isCurrent: Boolean,
     speed: Float,
+    playerMode: Int,
+    onNextMode: () -> Unit,
     liked: Boolean,
     saved: Boolean,
     onCycleSpeed: () -> Unit,
@@ -371,20 +382,29 @@ private fun VideoPage(
                 isCurrent = isCurrent,
                 captions = captions,
                 speed = speed,
+                mode = playerMode,
                 error = playerError,
                 onError = { playerError = it },
                 onOpenYouTube = onOpenYouTube,
                 onHide = onHide,
             )
 
-            Text(
-                text = "Il video non si vede? Aprilo su YouTube",
-                style = MaterialTheme.typography.labelMedium,
-                color = Color.White.copy(alpha = 0.72f),
-                modifier = Modifier
-                    .padding(horizontal = ScreenPadding, vertical = 6.dp)
-                    .clickable(onClick = onOpenYouTube),
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = ScreenPadding - 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onNextMode) {
+                    Text(
+                        "Video nero? Cambia metodo (${playerMode + 1}/${PlayerModes.COUNT})",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Palette.Orange,
+                    )
+                }
+                TextButton(onClick = onOpenYouTube) {
+                    Text("Apri su YouTube", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+                }
+            }
 
             Column(
                 modifier = Modifier.padding(horizontal = ScreenPadding).padding(top = 8.dp),
@@ -470,6 +490,7 @@ private fun PlayerArea(
     isCurrent: Boolean,
     captions: Boolean,
     speed: Float,
+    mode: Int,
     error: Int?,
     onError: (Int) -> Unit,
     onOpenYouTube: () -> Unit,
@@ -500,13 +521,16 @@ private fun PlayerArea(
                     }
                 }
             }
-            isCurrent -> YouTubePlayer(
+            isCurrent -> key(mode) {
+                YouTubePlayer(
                 videoId = item.id,
                 modifier = Modifier.fillMaxSize(),
                 captions = captions,
                 speed = speed,
+                mode = mode,
                 onError = onError,
             )
+            }
             else -> {
                 AsyncImage(item.thumbnail, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 Box(
