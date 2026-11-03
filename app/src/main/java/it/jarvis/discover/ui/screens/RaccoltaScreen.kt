@@ -52,6 +52,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import it.jarvis.discover.data.GratitudeEntry
+import it.jarvis.discover.data.creators.Creator
+import it.jarvis.discover.data.creators.FollowedCreator
+import it.jarvis.discover.ui.creators.CreatorAvatar
 import it.jarvis.discover.data.InterestCategories
 import it.jarvis.discover.data.categoryOf
 import it.jarvis.discover.ui.components.EmptyState
@@ -72,6 +75,8 @@ fun RaccoltaScreen(
     interests: List<String>,
     onRemoveInterest: (String) -> Unit,
     onManageInterests: () -> Unit,
+    follows: List<FollowedCreator>,
+    onOpenCreator: (Creator) -> Unit,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var playing by remember { mutableStateOf<VideoItem?>(null) }
@@ -112,11 +117,7 @@ fun RaccoltaScreen(
                 body = "Qui troverai i libri da leggere, in lettura e già letti.",
             )
             2 -> DiaryList(gratitude, onDeleteGratitude)
-            3 -> EmptyState(
-                emoji = "🌟",
-                title = "Nessun creator seguito",
-                body = "Le persone che segui per ricevere nuovi contenuti compariranno qui.",
-            )
+            3 -> FollowedList(follows, onOpenCreator)
             else -> InterestsTab(interests, onRemoveInterest, onManageInterests)
         }
     }
@@ -328,6 +329,42 @@ private fun SavedVideos(videos: List<VideoItem>, onPlay: (VideoItem) -> Unit, on
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FollowedList(follows: List<FollowedCreator>, onOpen: (Creator) -> Unit) {
+    if (follows.isEmpty()) {
+        EmptyState(
+            emoji = "🌟",
+            title = "Nessun creator seguito",
+            body = "Cerca una persona o un canale con la lente in alto e premi «Segui»: i suoi nuovi video compariranno nel feed.",
+        )
+        return
+    }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = ScreenPadding, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        items(follows, key = { it.creator.id }) { f ->
+            Row(
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable { onOpen(f.creator) }.padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CreatorAvatar(f.creator.thumbnail, 48.dp)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(f.creator.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    val details = buildList {
+                        add(f.level.label)
+                        if (f.topics.isNotEmpty()) add("solo: " + f.topics.joinToString(", "))
+                        if (f.notify) add("con notifiche")
+                    }.joinToString("  ·  ")
+                    Text(details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import it.jarvis.discover.data.creators.CreatorClient
+import it.jarvis.discover.data.creators.CreatorStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,12 +38,14 @@ sealed interface KeyTest {
 class VideoFeed(
     context: Context,
     private val scope: CoroutineScope,
+    val creators: CreatorStore = CreatorStore(context),
     private val client: YouTubeClient = YouTubeClient(),
     private val now: () -> Long = System::currentTimeMillis,
 ) {
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences("discover_videos", Context.MODE_PRIVATE)
     private val secure = SecureStore(appContext)
+    private val creatorClient = CreatorClient(client)
 
     // --- Chiave API ---
     var hasKey by mutableStateOf(secure.has(KEY_NAME)); private set
@@ -136,7 +140,7 @@ class VideoFeed(
 
     /** Elementi da mostrare, con i filtri attuali. Legge stato Compose: va chiamata nella composizione. */
     fun visible(filter: FeedFilter, acceptSubtitled: Boolean): List<VideoItem> =
-        pool.filter { it.id !in hiddenIds && it.isShown(acceptSubtitled) && filter.matches(it) }
+        creators.filter(pool.filter { it.id !in hiddenIds && it.isShown(acceptSubtitled) && filter.matches(it) })
 
     fun remainingSearches(): Int {
         rolloverQuota()
@@ -147,7 +151,7 @@ class VideoFeed(
     fun refresh(modes: List<String>, interests: List<String>, force: Boolean = false) {
         if (!hasKey || job?.isActive == true) return
         val candidates = FeedQueries.candidates(modes, interests, boosts)
-        val sig = FeedQueries.signature(candidates)
+        val sig = FeedQueries.signature(candidates) + followSignature()
         if (!force && pool.isNotEmpty() && loadedSig == sig) return
 
         val cache = readCache()
@@ -184,8 +188,29 @@ class VideoFeed(
         if (candidates.isEmpty()) return false
         val queries = FeedQueries.window(candidates, cursor, minOf(FeedQueries.BATCH, remaining))
         cursor += queries.size
-        fetch(queries, hint = filter.durationHint, replace = false, sig = FeedQueries.signature(candidates))
+        fetch(queries, hint = filter.durationHint, replace = false, sig = FeedQueries.signature(candidates) + followSignature())
         return true
+    }
+
+    /**
+     * Esegue una chiamata a YouTube con la chiave API, letta dall'archivio cifrato solo qui.
+     * Restituisce null se la chiave non c'è più. Va chiamata da una coroutine.
+     */
+    suspend fun <T> withKey(block: (key: String, client: CreatorClient) -> ApiResult<T>): ApiResult<T>? {
+        val result = withContext(Dispatchers.IO) {
+            val key = secure.get(KEY_NAME) ?: return@withContext null
+            block(key, creatorClient)
+        }
+        if (result == null) hasKey = false
+        return result
+    }
+
+    /** Registra ricerche consumate fuori dal feed (ricerca universale, ripiego dei creator). */
+    fun noteSearches(n: Int) = addSearches(n)
+
+    /** Se YouTube dice "quota finita", il contatore locale si allinea. */
+    fun noteError(error: YtError) {
+        if (error.kind == YtErrorKind.QuotaExceeded) markQuotaExhausted()
     }
 
     fun clearError() {
@@ -200,13 +225,25 @@ class VideoFeed(
         status = FeedStatus.Ready
     }
 
+    /** Cambia quando cambiano i creator seguiti che alimentano il feed: la cache non vale più. */
+    private fun followSignature(): String =
+        creators.feedSources(FOLLOWED_SOURCES).joinToString(",", prefix = "|f:") { it.id }
+
     private fun fetch(queries: List<FeedQuery>, hint: String?, replace: Boolean, sig: String) {
         busy = true
         if (pool.isEmpty()) status = FeedStatus.Loading
+        val followed = if (replace) creators.feedSources(FOLLOWED_SOURCES) else emptyList()
         job = scope.launch {
             val result = withContext(Dispatchers.IO) {
                 val key = secure.get(KEY_NAME) ?: return@withContext null
-                client.fetchFeed(key, queries, hint)
+                val searched = client.fetchFeed(key, queries, hint)
+                if (followed.isEmpty()) {
+                    searched
+                } else {
+                    // I video dei creator seguiti si leggono dalle playlist dei caricamenti: non consumano ricerche.
+                    val own = (creatorClient.followedFeed(key, followed) as? ApiResult.Ok)?.value.orEmpty()
+                    searched.copy(items = FeedQueries.interleave(listOf(own.take(FOLLOWED_MAX), searched.items)))
+                }
             }
             busy = false
             if (result == null) {
@@ -332,6 +369,8 @@ class VideoFeed(
         private const val CACHE_TTL_MS = 6 * 60 * 60 * 1000L
         private const val CACHE_MAX = 150
         private const val HIDDEN_MAX = 3000
+        private const val FOLLOWED_SOURCES = 12
+        private const val FOLLOWED_MAX = 40
 
         const val KEY_NAME = "youtube_api_key"
         private const val K_SAVED = "saved"

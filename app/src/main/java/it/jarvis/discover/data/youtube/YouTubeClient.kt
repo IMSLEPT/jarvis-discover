@@ -45,12 +45,12 @@ data class FeedResult(
  */
 class YouTubeClient(private val http: HttpFetcher = UrlConnectionFetcher) {
 
-    private fun url(path: String, params: List<Pair<String, String>>): String =
+    internal fun url(path: String, params: List<Pair<String, String>>): String =
         "https://www.googleapis.com/youtube/v3/$path?" +
             params.joinToString("&") { (k, v) -> "$k=${URLEncoder.encode(v, "UTF-8")}" }
 
     /** Esegue la richiesta e traduce errori HTTP e di rete in [YtError]. Non registra mai l'URL (contiene la chiave). */
-    private fun call(url: String): ApiResult<String> {
+    internal fun call(url: String): ApiResult<String> {
         val response = try {
             http.get(url)
         } catch (e: IOException) {

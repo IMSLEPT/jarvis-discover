@@ -112,8 +112,10 @@ fun VideoScreen(
     interests: List<String>,
     acceptSubtitled: Boolean,
     onOpenSettings: () -> Unit,
+    onOpenCreator: (channelId: String, title: String) -> Unit = { _, _ -> },
 ) {
     var filter by rememberSaveable { mutableStateOf(FeedFilter.All) }
+    var followedOnly by rememberSaveable { mutableStateOf(false) }
     var speed by rememberSaveable { mutableFloatStateOf(1f) }
     var details by remember { mutableStateOf<VideoItem?>(null) }
     var autoLoads by remember { mutableIntStateOf(0) }
@@ -125,14 +127,17 @@ fun VideoScreen(
         if (feed.hasKey) feed.refresh(modes, interests)
     }
 
-    val items = feed.visible(filter, acceptSubtitled)
+    val hasFollows = feed.creators.follows.isNotEmpty()
+    val items = feed.visible(filter, acceptSubtitled).let { all ->
+        if (followedOnly && hasFollows) all.filter { feed.creators.isFollowing(it.channelId) } else all
+    }
     val pager = rememberPagerState(pageCount = { items.size })
 
     fun requestMore() {
         if (autoLoads < MAX_AUTO_LOADS && feed.loadMore(modes, interests, filter)) autoLoads++
     }
 
-    LaunchedEffect(filter) {
+    LaunchedEffect(filter, followedOnly) {
         if (items.isNotEmpty()) pager.scrollToPage(0)
         if (feed.hasKey && feed.pool.isNotEmpty() && filter != FeedFilter.All && items.size < MIN_FILTER_ITEMS) requestMore()
     }
@@ -198,6 +203,7 @@ fun VideoScreen(
                     onDetails = { details = item },
                     onShare = { shareText(context, item.title, "${item.title}\n${item.shareUrl}") },
                     onOpenYouTube = { if (!openUrl(context, item.watchUrl)) say("Nessuna app può aprire il link") },
+                    onOpenCreator = { onOpenCreator(item.channelId, item.channelTitle) },
                 )
             }
         }
@@ -206,6 +212,8 @@ fun VideoScreen(
             FilterBar(
                 filter = filter,
                 onFilter = { filter = it },
+                followedOnly = followedOnly,
+                onFollowedOnly = if (hasFollows) ({ followedOnly = !followedOnly }) else null,
                 busy = feed.busy,
                 onRefresh = {
                     if (feed.remainingSearches() <= 0) {
@@ -238,6 +246,8 @@ fun VideoScreen(
 private fun FilterBar(
     filter: FeedFilter,
     onFilter: (FeedFilter) -> Unit,
+    followedOnly: Boolean,
+    onFollowedOnly: (() -> Unit)?,
     busy: Boolean,
     onRefresh: () -> Unit,
     onSettings: () -> Unit,
@@ -265,6 +275,23 @@ private fun FilterBar(
                         selectedLabelColor = Palette.Dark,
                     ),
                 )
+            }
+            if (onFollowedOnly != null) {
+                item {
+                    FilterChip(
+                        selected = followedOnly,
+                        onClick = onFollowedOnly,
+                        label = { Text("Seguiti", style = MaterialTheme.typography.labelLarge) },
+                        shape = CircleShape,
+                        border = null,
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = Color.White.copy(alpha = 0.12f),
+                            labelColor = Color.White,
+                            selectedContainerColor = Color.White,
+                            selectedLabelColor = Palette.Dark,
+                        ),
+                    )
+                }
             }
         }
         if (busy) {
@@ -299,6 +326,7 @@ private fun VideoPage(
     onDetails: () -> Unit,
     onShare: () -> Unit,
     onOpenYouTube: () -> Unit,
+    onOpenCreator: () -> Unit,
 ) {
     // Per i video con sottotitoli ma audio non italiano si parte con i sottotitoli accesi.
     var captionsChoice by remember(video.id) { mutableStateOf<Boolean?>(null) }
@@ -356,6 +384,7 @@ private fun VideoPage(
                     color = Color.White.copy(alpha = 0.72f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.clickable(onClick = onOpenCreator),
                 )
                 video.topic?.let {
                     Text(

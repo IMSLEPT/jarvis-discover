@@ -11,6 +11,7 @@ object BackupSpec {
     val files: Map<String, Set<String>> = mapOf(
         "discover_prefs" to setOf("last_backup_at"),
         "discover_videos" to setOf("cache", "quota_day", "quota_searches"),
+        "discover_creators" to setOf("last_seen"),
         "discover_library" to emptySet(),
         "discover_profile" to emptySet(),
         "discover_wellbeing" to emptySet(),

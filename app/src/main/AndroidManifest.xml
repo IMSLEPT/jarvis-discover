@@ -4,6 +4,9 @@
     <!-- Serve solo per i video: richieste a YouTube con la chiave che inserisci tu. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Solo se attivi la campanella di un creator: avvisi sui nuovi video. Il permesso si chiede in quel momento. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

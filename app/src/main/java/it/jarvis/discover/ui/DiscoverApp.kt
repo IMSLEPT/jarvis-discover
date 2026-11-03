@@ -57,6 +57,8 @@ import it.jarvis.discover.data.DiscoverViewModel
 import it.jarvis.discover.ui.components.EmojiBubble
 import it.jarvis.discover.ui.components.PhaseChip
 import it.jarvis.discover.ui.components.ScreenPadding
+import it.jarvis.discover.ui.creators.CreatorPage
+import it.jarvis.discover.ui.search.SearchSheet
 import it.jarvis.discover.ui.screens.BenessereScreen
 import it.jarvis.discover.ui.screens.InterestsScreen
 import it.jarvis.discover.ui.screens.MoodScreen
@@ -199,6 +201,7 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                     interests = vm.interests,
                     acceptSubtitled = vm.acceptSubtitled,
                     onOpenSettings = { sheet = AppSheet.Settings },
+                    onOpenCreator = vm.videos.creators::open,
                 )
             }
             composable(Tab.Benessere.route) { BenessereScreen(onSaveGratitude = vm::addGratitude) }
@@ -211,22 +214,32 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                     interests = vm.interests,
                     onRemoveInterest = vm::toggleInterest,
                     onManageInterests = { navController.navigate(ROUTE_INTERESTS) },
+                    follows = vm.videos.creators.follows,
+                    onOpenCreator = vm.videos.creators::open,
                 )
             }
         }
     }
 
+    vm.videos.creators.page?.let { ref ->
+        CreatorPage(
+            ref = ref,
+            feed = vm.videos,
+            acceptSubtitled = vm.acceptSubtitled,
+            onClose = vm.videos.creators::close,
+        )
+    }
+
     sheet?.let { current ->
         key(current) {
             // Le impostazioni contengono un campo di testo: si aprono subito a tutta altezza.
-            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = current == AppSheet.Settings)
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = current != AppSheet.Assistant)
             ModalBottomSheet(onDismissRequest = { sheet = null }, sheetState = sheetState) {
                 when (current) {
-                    AppSheet.Search -> ComingSoonSheet(
-                        emoji = "🔎",
-                        title = "Ricerca universale",
-                        body = "Cercherai persone, canali, argomenti e conferenze da un unico posto, con filtri per durata, lingua e popolarità.",
-                        phase = 4,
+                    AppSheet.Search -> SearchSheet(
+                        feed = vm.videos,
+                        acceptSubtitled = vm.acceptSubtitled,
+                        onOpenSettings = { sheet = AppSheet.Settings },
                     )
                     AppSheet.Assistant -> ComingSoonSheet(
                         emoji = "✨",
