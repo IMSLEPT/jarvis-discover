@@ -76,11 +76,12 @@ class ProfileStore(
     // ---- segnali
     fun onWatched(v: VideoItem) {
         if (!learning) return
-        if (history.none { it.video.id == v.id }) {
-            history.add(0, HistoryEntry(v, now()))
-            while (history.size > MAX_HISTORY) history.removeAt(history.size - 1)
-        }
-        update(v, topic = 1.0, channel = 0.6, bucketDelta = 1)
+        // Rivedere lo stesso video non rafforza di nuovo i segnali: aggiorna solo la data in cronologia.
+        val already = history.any { it.video.id == v.id }
+        history.removeAll { it.video.id == v.id }
+        history.add(0, HistoryEntry(v, now()))
+        while (history.size > MAX_HISTORY) history.removeAt(history.size - 1)
+        if (already) save() else update(v, topic = 1.0, channel = 0.6, bucketDelta = 1)
     }
 
     fun onLiked(v: VideoItem, liked: Boolean) = update(v, topic = if (liked) 2.0 else -2.0, channel = if (liked) 1.0 else -1.0, bucketDelta = if (liked) 1 else 0)
