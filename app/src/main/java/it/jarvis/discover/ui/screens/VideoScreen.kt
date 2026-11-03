@@ -93,6 +93,7 @@ import it.jarvis.discover.ui.components.YouTubePlayer
 import it.jarvis.discover.ui.components.openUrl
 import it.jarvis.discover.ui.components.shareText
 import it.jarvis.discover.ui.theme.Palette
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -104,6 +105,9 @@ private const val MIN_FILTER_ITEMS = 6
 
 /** Tetto di ricerche automatiche per ogni visita alla schermata (ognuna è un blocco di 4 ricerche di quota). */
 private const val MAX_AUTO_LOADS = 5
+
+/** Dopo quanto tempo in vista un video conta come guardato. */
+private const val WATCH_MARK_MS = 8_000L
 
 @Composable
 fun VideoScreen(
@@ -145,6 +149,14 @@ fun VideoScreen(
         if (items.isNotEmpty() && pager.settledPage >= items.size - 3) requestMore()
     }
 
+    // Un video conta come "guardato" solo se resta in vista per qualche secondo (non basta scorrerlo).
+    val currentId = items.getOrNull(pager.settledPage)?.id
+    LaunchedEffect(currentId) {
+        val watched = items.getOrNull(pager.settledPage) ?: return@LaunchedEffect
+        delay(WATCH_MARK_MS)
+        feed.markWatched(watched)
+    }
+
     val error = feed.lastError
     LaunchedEffect(error) {
         if (error != null) {
@@ -178,6 +190,7 @@ fun VideoScreen(
                 val item = items.getOrNull(page) ?: return@VerticalPager
                 VideoPage(
                     video = item,
+                    why = feed.whyThis(item),
                     isCurrent = page == pager.settledPage,
                     speed = speed,
                     liked = feed.isLiked(item.id),
@@ -314,6 +327,7 @@ private fun FilterBar(
 @Composable
 private fun VideoPage(
     video: VideoItem,
+    why: List<String>,
     isCurrent: Boolean,
     speed: Float,
     liked: Boolean,
@@ -386,11 +400,13 @@ private fun VideoPage(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.clickable(onClick = onOpenCreator),
                 )
-                video.topic?.let {
+                if (why.isNotEmpty()) {
                     Text(
-                        text = "Perché lo vedi: $it",
+                        text = "Perché lo vedi: " + why.joinToString(" · "),
                         style = MaterialTheme.typography.labelMedium,
                         color = Palette.Orange,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }

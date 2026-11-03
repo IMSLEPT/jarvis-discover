@@ -54,7 +54,9 @@ import androidx.compose.ui.unit.dp
 import it.jarvis.discover.data.GratitudeEntry
 import it.jarvis.discover.data.content.LibraryStore
 import it.jarvis.discover.data.creators.Creator
+import it.jarvis.discover.data.reco.ProfileStore
 import it.jarvis.discover.playback.AudioController
+import it.jarvis.discover.ui.profile.ProfileTab
 import it.jarvis.discover.ui.content.LibraryTab
 import it.jarvis.discover.data.creators.FollowedCreator
 import it.jarvis.discover.ui.creators.CreatorAvatar
@@ -67,7 +69,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val CollectionTabs = listOf("Video", "Libri e ascolto", "Diario", "Creator", "Interessi")
+private val CollectionTabs = listOf("Video", "Libri e ascolto", "Diario", "Creator", "Interessi", "Profilo")
 
 @Composable
 fun RaccoltaScreen(
@@ -82,6 +84,7 @@ fun RaccoltaScreen(
     onOpenCreator: (Creator) -> Unit,
     library: LibraryStore,
     audio: AudioController,
+    profile: ProfileStore,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var playing by remember { mutableStateOf<VideoItem?>(null) }
@@ -119,7 +122,8 @@ fun RaccoltaScreen(
             1 -> LibraryTab(library, audio, interests)
             2 -> DiaryList(gratitude, onDeleteGratitude)
             3 -> FollowedList(follows, onOpenCreator)
-            else -> InterestsTab(interests, onRemoveInterest, onManageInterests)
+            4 -> InterestsTab(interests, onRemoveInterest, onManageInterests)
+            else -> ProfileTab(profile, onPlay = { playing = it })
         }
     }
 

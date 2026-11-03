@@ -4,10 +4,14 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import it.jarvis.discover.data.creators.CreatorClient
 import it.jarvis.discover.data.creators.CreatorStore
+import it.jarvis.discover.data.reco.ProfileStore
+import it.jarvis.discover.data.reco.RankContext
+import it.jarvis.discover.data.reco.Recommender
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,6 +43,7 @@ class VideoFeed(
     context: Context,
     private val scope: CoroutineScope,
     val creators: CreatorStore = CreatorStore(context),
+    val profile: ProfileStore = ProfileStore.from(context),
     private val client: YouTubeClient = YouTubeClient(),
     private val now: () -> Long = System::currentTimeMillis,
 ) {
@@ -62,6 +67,9 @@ class VideoFeed(
     var lastError by mutableStateOf<YtError?>(null); private set
     val pool = mutableStateListOf<VideoItem>()
     var searchesToday by mutableIntStateOf(0); private set
+    /** Motivi per cui ogni video è nel feed, calcolati dalla classifica trasparente. */
+    private val reasons = mutableStateMapOf<String, List<String>>()
+    private var rankInterests: Set<String> = emptySet()
 
     // --- Raccolta e feedback dell'utente ---
     val saved = mutableStateListOf<VideoItem>()
@@ -150,6 +158,7 @@ class VideoFeed(
     /** Carica il feed: dalla cache se è recente e adatta agli interessi, altrimenti da YouTube. */
     fun refresh(modes: List<String>, interests: List<String>, force: Boolean = false) {
         if (!hasKey || job?.isActive == true) return
+        rankInterests = (modes + interests).toSet()
         val candidates = FeedQueries.candidates(modes, interests, boosts)
         val sig = FeedQueries.signature(candidates) + followSignature()
         if (!force && pool.isNotEmpty() && loadedSig == sig) return
@@ -179,6 +188,7 @@ class VideoFeed(
     /** Aggiunge altri video con le ricerche successive (orientate alla durata del filtro). Vero se ha avviato una ricerca. */
     fun loadMore(modes: List<String>, interests: List<String>, filter: FeedFilter): Boolean {
         if (!hasKey || busy || job?.isActive == true) return false
+        rankInterests = (modes + interests).toSet()
         val remaining = remainingSearches()
         if (remaining <= 0) {
             if (lastError?.kind != YtErrorKind.QuotaExceeded) lastError = YtError(YtErrorKind.QuotaExceeded)
@@ -219,7 +229,7 @@ class VideoFeed(
 
     private fun useCache(cache: Cache, sig: String) {
         pool.clear()
-        pool.addAll(cache.items.filter { it.id !in hiddenIds })
+        pool.addAll(rankItems(cache.items.filter { it.id !in hiddenIds }))
         loadedSig = sig
         cursor = FeedQueries.BATCH
         status = FeedStatus.Ready
@@ -228,6 +238,29 @@ class VideoFeed(
     /** Cambia quando cambiano i creator seguiti che alimentano il feed: la cache non vale più. */
     private fun followSignature(): String =
         creators.feedSources(FOLLOWED_SOURCES).joinToString(",", prefix = "|f:") { it.id }
+
+    /** Ordina i video con la classifica trasparente e ricorda i motivi di ciascuno. */
+    private fun rankItems(items: List<VideoItem>): List<VideoItem> {
+        if (items.isEmpty()) return items
+        val ctx = RankContext(
+            interests = rankInterests,
+            profile = profile.snapshot(),
+            seenIds = profile.seenIds,
+            isFollowed = { creators.isFollowing(it) },
+            exploration = profile.exploration,
+            nowMs = now(),
+        )
+        val ranked = Recommender.rank(items, ctx)
+        ranked.forEach { reasons[it.item.id] = it.reasons }
+        return ranked.map { it.item }
+    }
+
+    /** Perché questo video compare: i motivi principali, oppure almeno l'argomento da cui arriva. */
+    fun whyThis(item: VideoItem): List<String> =
+        reasons[item.id]?.takeIf { it.isNotEmpty() } ?: listOfNotNull(item.topic?.let { "Argomento: $it" })
+
+    /** Da chiamare quando il video è rimasto in vista abbastanza da dire che l'hai guardato davvero. */
+    fun markWatched(item: VideoItem) = profile.onWatched(item)
 
     private fun fetch(queries: List<FeedQuery>, hint: String?, replace: Boolean, sig: String) {
         busy = true
@@ -255,7 +288,7 @@ class VideoFeed(
             val fresh = result.items.filter { it.id !in hiddenIds }
             if (replace && fresh.isNotEmpty()) pool.clear()
             val known = pool.mapTo(HashSet()) { it.id }
-            pool.addAll(fresh.filter { it.id !in known })
+            pool.addAll(rankItems(fresh.filter { it.id !in known }))
             if (pool.isNotEmpty()) {
                 loadedSig = sig
                 writeCache(sig, pool.take(CACHE_MAX))
@@ -281,16 +314,19 @@ class VideoFeed(
     fun toggleLike(item: VideoItem) {
         likedIds = if (item.id in likedIds) likedIds - item.id else likedIds + item.id
         saveSet(K_LIKED, likedIds)
+        profile.onLiked(item, item.id in likedIds)
     }
 
     fun toggleSave(item: VideoItem) {
         if (!saved.removeAll { it.id == item.id }) saved.add(0, item)
         prefs.edit().putString(K_SAVED, YouTubeParser.listToJson(saved)).apply()
+        profile.onSaved(item, isSaved(item.id))
     }
 
     fun hide(item: VideoItem) {
         hiddenIds = (hiddenIds + item.id).toList().takeLast(HIDDEN_MAX).toCollection(LinkedHashSet())
         saveSet(K_HIDDEN, hiddenIds)
+        profile.onHidden(item)
     }
 
     fun unhide(id: String) {
@@ -305,6 +341,7 @@ class VideoFeed(
         val obj = JSONObject()
         boosts.forEach { (k, v) -> obj.put(k, v) }
         prefs.edit().putString(K_BOOSTS, obj.toString()).apply()
+        profile.onMoreLike(item)
         return true
     }
 

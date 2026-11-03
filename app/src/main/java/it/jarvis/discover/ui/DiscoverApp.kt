@@ -252,6 +252,7 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                     onOpenCreator = vm.videos.creators::open,
                     library = vm.library,
                     audio = vm.audio,
+                    profile = vm.videos.profile,
                 )
             }
         }
