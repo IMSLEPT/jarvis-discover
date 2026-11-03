@@ -73,7 +73,7 @@ class BackupCodecTest {
     @Test
     fun absurdIterationCountIsRejected() {
         val file = BackupCodec.encrypt("x".toByteArray(), pass, iterations = 2_000)
-        file[8] = 0x7f // porta le iterazioni a un valore enorme (denial of service)
+        file[6] = 0x7f // byte più alto delle iterazioni: valore enorme (denial of service)
         try {
             BackupCodec.decrypt(file, pass)
             fail("doveva fallire")
