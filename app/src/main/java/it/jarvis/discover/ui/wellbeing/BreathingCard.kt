@@ -102,7 +102,7 @@ private fun Running(player: BreathingPlayer) {
 
 /** Il cerchio: aloni azzurri e arancioni intorno a un disco blu, come l'anello dell'icona. */
 @Composable
-private fun Disc(scale: Float) {
+internal fun Disc(scale: Float) {
     Canvas(Modifier.fillMaxSize()) {
         val max = size.minDimension / 2f
         val r = max * scale

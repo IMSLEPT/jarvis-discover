@@ -62,6 +62,7 @@ import it.jarvis.discover.data.wellbeing.SessionPlayer
 import it.jarvis.discover.data.wellbeing.Sessions
 import it.jarvis.discover.data.wellbeing.StressPath
 import it.jarvis.discover.data.wellbeing.WellbeingStore
+import it.jarvis.discover.data.wellbeing.WimHofPlayer
 import it.jarvis.discover.ui.components.BrandHeadline
 import it.jarvis.discover.ui.components.EmojiBubble
 import it.jarvis.discover.ui.components.ScreenPadding
@@ -79,6 +80,7 @@ fun BenessereScreen(
     sessions: SessionPlayer,
     breathing: BreathingPlayer,
     noise: NoisePlayer,
+    wimHof: WimHofPlayer,
     onSaveGratitude: (List<String>) -> Unit,
 ) {
     var cautionFor by remember { mutableStateOf<Session?>(null) }
@@ -89,12 +91,14 @@ fun BenessereScreen(
         // Il suono di sottofondo e la sessione parlata si sovrapporrebbero: si ferma il rumore.
         noise.stop()
         breathing.stop()
+        wimHof.stop()
         if (s.caution != null) cautionFor = s else sessions.start(s)
     }
 
     fun beginBreath(id: String, minutes: Int) {
         val p = Breathing.byId(id) ?: return
         noise.stop()
+        wimHof.stop()
         breathing.start(p, minutes)
     }
 
@@ -146,7 +150,7 @@ fun BenessereScreen(
         item(key = "path") { PathCard(store, onSession = ::begin, onBreath = { beginBreath(it, 3) }) }
         item(key = "gratitude") { GratitudeCard(onSave = onSaveGratitude) }
         item(key = "progress") { ProgressCard(store) }
-        item(key = "wimhof") { WimHofCard() }
+        item(key = "wimhof") { WimHofCard(wimHof, store.entries, onBeforeStart = { noise.stop(); breathing.stop(); sessions.stop() }) }
         item(key = "disclaimer") {
             Text(
                 "Questi esercizi sono pensati per il benessere di ogni giorno e non sostituiscono cure mediche o psicologiche. " +
@@ -391,62 +395,5 @@ private fun ProgressCard(store: WellbeingStore) {
             confirmButton = { TextButton(onClick = { store.clearAll(); confirm = false }) { Text("Azzera") } },
             dismissButton = { TextButton(onClick = { confirm = false }) { Text("Annulla") } },
         )
-    }
-}
-
-@Composable
-private fun WimHofCard() {
-    val context = LocalContext.current
-    var open by rememberSaveable { mutableStateOf(false) }
-    SoftCard(modifier = Modifier.animateContentSize(), contentPadding = PaddingValues(0.dp)) {
-        Column {
-            Row(
-                Modifier.fillMaxWidth().clickable { open = !open }.padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                EmojiBubble(emoji = "❄️", size = 44, background = MaterialTheme.colorScheme.secondaryContainer)
-                Column(Modifier.weight(1f)) {
-                    Text("Metodo Wim Hof: cosa sapere", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Solo informazioni e avvertenze, nessuna istruzione pratica.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            AnimatedVisibility(visible = open) {
-                Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Info("Che cos'è", "Un metodo che combina esercizi di respirazione intensa, esposizione al freddo e concentrazione mentale, reso popolare da Wim Hof.")
-                    Info(
-                        "Cosa dicono gli studi",
-                        "Una revisione sistematica degli studi pubblicati dal 2014 a luglio 2022 ha trovato 8 sperimentazioni, ciascuna con 15–48 partecipanti, in gran parte uomini. " +
-                            "Gli autori giudicano la qualità degli studi molto bassa: il segnale più interessante riguarda la risposta infiammatoria, ma invitano alla cautela. " +
-                            "Non è dimostrato come cura di alcuna malattia.",
-                    )
-                    Info(
-                        "Rischi",
-                        "Gli esperti avvertono che respirare in modo forzato e poi trattenere il respiro può far perdere conoscenza. In acqua può essere mortale; l'associazione con l'immersione in acqua fredda è indicata come la più pericolosa.",
-                    )
-                    Info(
-                        "Regole di sicurezza di Discover",
-                        "Mai apnea né respiri forzati in acqua (vasca, piscina, mare), alla guida, in piedi o dove una caduta sarebbe pericolosa. In via precauzionale, chi ha problemi di cuore o di pressione, epilessia o è in gravidanza ne parli prima con il medico.",
-                    )
-                    Text(
-                        "Per questo Discover non contiene istruzioni per questa tecnica: per rilassarti usa gli esercizi di respirazione lenta qui sopra, che non prevedono trattenute lunghe.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        TextButton(onClick = { openUrl(context, "https://pmc.ncbi.nlm.nih.gov/articles/PMC10936795/") }) { Text("Revisione sistematica") }
-                        TextButton(onClick = { openUrl(context, "https://livescience.com/health/gambling-with-your-life-experts-weigh-in-on-dangers-of-the-wim-hof-method") }) { Text("Parere degli esperti") }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Info(title: String, text: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

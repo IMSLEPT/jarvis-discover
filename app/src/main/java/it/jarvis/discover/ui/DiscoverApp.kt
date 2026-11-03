@@ -238,7 +238,7 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                 )
             }
             composable(Tab.Benessere.route) {
-                BenessereScreen(vm.wellbeing, vm.sessions, vm.breathing, vm.noise, onSaveGratitude = vm::addGratitude)
+                BenessereScreen(vm.wellbeing, vm.sessions, vm.breathing, vm.noise, vm.wimHof, onSaveGratitude = vm::addGratitude)
             }
             composable(Tab.Raccolta.route) {
                 RaccoltaScreen(

@@ -89,7 +89,7 @@ Il modello si sceglie da `models.list` tra quelli indicati nella documentazione 
 
 Pensiero del giorno, domande di riflessione, idee, consigli sulle relazioni e testi delle sessioni guidate sono scritti
 per Discover e sono etichettati come tali («Scritto per Discover»). Non sono citazioni di persone reali.
-Le sessioni di benessere non sono assistenza sanitaria; la scheda su Wim Hof è solo informativa e non dà istruzioni pratiche.
+Le sessioni di benessere non sono assistenza sanitaria; l'allenamento Wim Hof (solo respirazione, nessun esercizio con il freddo) è una versione prudente dello schema descritto dal sito ufficiale: controllo di sicurezza obbligatorio prima di ogni sessione, livello "Dolce" con meno respiri e apnea al massimo 30 secondi, livello "Standard" sbloccato solo dopo aver completato il Dolce, tetto alla durata dell'apnea, arresto automatico se l'app esce dallo schermo. Il ritmo dei respiri e i tetti sono scelte di Discover, non del metodo originale; non è una cura e non sostituisce il parere del medico. Fonti: wimhofmethod.com (esercizi di respirazione e avvertenze), Live Science (aprile 2024), Healthline (revisione medica 2021). La logica è provata con test automatici; non è stata provata su un telefono.
 
 ## Cosa è verificato e cosa no
 
