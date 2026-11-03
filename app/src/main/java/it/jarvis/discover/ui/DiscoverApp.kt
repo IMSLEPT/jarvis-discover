@@ -69,7 +69,7 @@ import it.jarvis.discover.ui.content.NewsScreen
 import it.jarvis.discover.ui.content.PodcastsScreen
 import it.jarvis.discover.ui.creators.CreatorPage
 import it.jarvis.discover.ui.search.SearchSheet
-import it.jarvis.discover.ui.screens.BenessereScreen
+import it.jarvis.discover.ui.wellbeing.BenessereScreen
 import it.jarvis.discover.ui.screens.InterestsScreen
 import it.jarvis.discover.ui.screens.MoodScreen
 import it.jarvis.discover.ui.screens.OggiScreen
@@ -236,7 +236,9 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                     onOpenCreator = vm.videos.creators::open,
                 )
             }
-            composable(Tab.Benessere.route) { BenessereScreen(onSaveGratitude = vm::addGratitude) }
+            composable(Tab.Benessere.route) {
+                BenessereScreen(vm.wellbeing, vm.sessions, vm.breathing, vm.noise, onSaveGratitude = vm::addGratitude)
+            }
             composable(Tab.Raccolta.route) {
                 RaccoltaScreen(
                     savedVideos = vm.videos.saved,

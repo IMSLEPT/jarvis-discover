@@ -13,6 +13,12 @@ import it.jarvis.discover.data.backup.BackupManager
 import it.jarvis.discover.data.content.LibraryStore
 import it.jarvis.discover.data.content.NewsRepository
 import it.jarvis.discover.data.content.TodayBook
+import it.jarvis.discover.data.wellbeing.ActivityKind
+import it.jarvis.discover.data.wellbeing.BreathingPlayer
+import it.jarvis.discover.data.wellbeing.NoisePlayer
+import it.jarvis.discover.data.wellbeing.SessionPlayer
+import it.jarvis.discover.data.wellbeing.TtsSpeaker
+import it.jarvis.discover.data.wellbeing.WellbeingStore
 import it.jarvis.discover.playback.AudioController
 import it.jarvis.discover.data.youtube.SecureStore
 import it.jarvis.discover.data.youtube.VideoFeed
@@ -68,6 +74,12 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
     val library = LibraryStore(app)
     val audio = AudioController(app, viewModelScope, library)
     val todayBook = TodayBook(app, viewModelScope)
+
+    /** Benessere: diario del tempo dedicato a sé, sessioni guidate con voce, respirazione e rumori rilassanti. */
+    val wellbeing = WellbeingStore.from(app)
+    val sessions = SessionPlayer(viewModelScope, TtsSpeaker(app), wellbeing)
+    val breathing = BreathingPlayer(viewModelScope, wellbeing)
+    val noise = NoisePlayer(viewModelScope, wellbeing)
 
     /** Vero dopo che l'utente ha completato (o saltato) la scelta iniziale degli interessi. */
     var onboardingDone by mutableStateOf(prefs.getBoolean(KEY_ONBOARDED, false))
@@ -143,6 +155,7 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
         if (clean.isEmpty()) return
         gratitude.add(0, GratitudeEntry(System.currentTimeMillis(), clean))
         persistGratitude()
+        wellbeing.log(ActivityKind.Gratitude, "Gratitudine", 0)
     }
 
     fun deleteGratitude(entry: GratitudeEntry) {
@@ -201,6 +214,9 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
 
     override fun onCleared() {
         audio.release()
+        sessions.release()
+        breathing.release()
+        noise.release()
         super.onCleared()
     }
 }
