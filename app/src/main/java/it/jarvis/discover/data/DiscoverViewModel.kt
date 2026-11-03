@@ -49,8 +49,54 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
 
     val gratitude = mutableStateListOf<GratitudeEntry>()
 
+    /** Vero dopo che l'utente ha completato (o saltato) la scelta iniziale degli interessi. */
+    var onboardingDone by mutableStateOf(prefs.getBoolean(KEY_ONBOARDED, false))
+        private set
+
+    /** Argomenti scelti dall'utente, del catalogo o personalizzati. Nessun limite di numero. */
+    var interests by mutableStateOf(loadList(KEY_INTERESTS))
+        private set
+
+    /** Argomenti inventati dall'utente: esistono finché restano selezionati. */
+    var customTopics by mutableStateOf(loadList(KEY_CUSTOM))
+        private set
+
     init {
         loadGratitude()
+    }
+
+    fun completeOnboarding() {
+        onboardingDone = true
+        prefs.edit().putBoolean(KEY_ONBOARDED, true).apply()
+    }
+
+    fun toggleInterest(topic: String) {
+        if (topic in interests) {
+            interests = interests - topic
+            if (topic in customTopics) {
+                customTopics = customTopics - topic
+                saveList(KEY_CUSTOM, customTopics)
+            }
+        } else {
+            interests = interests + topic
+        }
+        saveList(KEY_INTERESTS, interests)
+    }
+
+    /** Aggiunge e seleziona un argomento libero; se esiste già (anche nel catalogo) seleziona quello. */
+    fun addCustomTopic(raw: String) {
+        val name = raw.trim().replace(Regex("\\s+"), " ").take(MAX_TOPIC_LENGTH)
+        if (name.isEmpty()) return
+        val existing = (CatalogTopics + customTopics).firstOrNull { it.equals(name, ignoreCase = true) }
+        val topic = existing ?: name
+        if (existing == null) {
+            customTopics = customTopics + topic
+            saveList(KEY_CUSTOM, customTopics)
+        }
+        if (topic !in interests) {
+            interests = interests + topic
+            saveList(KEY_INTERESTS, interests)
+        }
     }
 
     fun updateThemeMode(mode: ThemeMode) {
@@ -101,6 +147,15 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private fun loadList(key: String): List<String> = runCatching {
+        val array = JSONArray(prefs.getString(key, "[]"))
+        List(array.length()) { array.getString(it) }
+    }.getOrDefault(emptyList())
+
+    private fun saveList(key: String, values: List<String>) {
+        prefs.edit().putString(key, JSONArray(values).toString()).apply()
+    }
+
     private fun persistGratitude() {
         val array = JSONArray()
         gratitude.forEach { entry ->
@@ -118,5 +173,9 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
         const val KEY_MINUTES = "session_minutes"
         const val KEY_SUBTITLED = "accept_subtitled"
         const val KEY_GRATITUDE = "gratitude_entries"
+        const val KEY_ONBOARDED = "onboarding_done"
+        const val KEY_INTERESTS = "interests"
+        const val KEY_CUSTOM = "custom_topics"
+        const val MAX_TOPIC_LENGTH = 60
     }
 }

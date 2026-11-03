@@ -60,6 +60,7 @@ import it.jarvis.discover.ui.components.EmojiBubble
 import it.jarvis.discover.ui.components.PhaseChip
 import it.jarvis.discover.ui.components.ScreenPadding
 import it.jarvis.discover.ui.screens.BenessereScreen
+import it.jarvis.discover.ui.screens.InterestsScreen
 import it.jarvis.discover.ui.screens.MoodScreen
 import it.jarvis.discover.ui.screens.OggiScreen
 import it.jarvis.discover.ui.screens.RaccoltaScreen
@@ -67,6 +68,11 @@ import it.jarvis.discover.ui.screens.ScopriScreen
 import it.jarvis.discover.ui.screens.VideoScreen
 
 private const val ROUTE_MOOD = "mood"
+private const val ROUTE_ONBOARDING = "interessi_iniziali"
+private const val ROUTE_INTERESTS = "interessi"
+
+/** Schermate a tutto schermo che gestiscono da sole i margini di sistema. */
+private val FullScreenRoutes by lazy { setOf(ROUTE_MOOD, ROUTE_ONBOARDING, ROUTE_INTERESTS, Tab.Video.route) }
 
 /** Le cinque sezioni principali della barra di navigazione. */
 private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
@@ -86,8 +92,10 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
     val route = backStack?.destination?.route
     val isTab = Tab.entries.any { it.route == route }
     val isVideo = route == Tab.Video.route
-    val edgeToEdge = isVideo || route == ROUTE_MOOD || route == null
+    val edgeToEdge = route == null || route in FullScreenRoutes
     var sheet by remember { mutableStateOf<AppSheet?>(null) }
+    // Il punto di partenza si decide una volta sola: gli interessi si chiedono solo al primo avvio.
+    val startRoute = remember { if (vm.onboardingDone) ROUTE_MOOD else ROUTE_ONBOARDING }
 
     // Colore delle icone di sistema: chiare sul feed video (sempre scuro), altrimenti in base al tema.
     val view = LocalView.current
@@ -126,13 +134,38 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = ROUTE_MOOD,
+            startDestination = startRoute,
             modifier = Modifier.padding(padding),
             enterTransition = { fadeIn(tween(220)) },
             exitTransition = { fadeOut(tween(160)) },
             popEnterTransition = { fadeIn(tween(220)) },
             popExitTransition = { fadeOut(tween(160)) },
         ) {
+            composable(ROUTE_ONBOARDING) {
+                InterestsScreen(
+                    onboarding = true,
+                    selected = vm.interests,
+                    customTopics = vm.customTopics,
+                    onToggle = vm::toggleInterest,
+                    onAddCustom = vm::addCustomTopic,
+                    onDone = {
+                        vm.completeOnboarding()
+                        navController.navigate(ROUTE_MOOD) {
+                            popUpTo(ROUTE_ONBOARDING) { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable(ROUTE_INTERESTS) {
+                InterestsScreen(
+                    onboarding = false,
+                    selected = vm.interests,
+                    customTopics = vm.customTopics,
+                    onToggle = vm::toggleInterest,
+                    onAddCustom = vm::addCustomTopic,
+                    onDone = { navController.popBackStack() },
+                )
+            }
             composable(ROUTE_MOOD) {
                 MoodScreen(
                     selected = vm.modes,
@@ -153,11 +186,24 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                     onOpenBenessere = { openTab(Tab.Benessere) },
                 )
             }
-            composable(Tab.Scopri.route) { ScopriScreen(onOpenSearch = { sheet = AppSheet.Search }) }
+            composable(Tab.Scopri.route) {
+                ScopriScreen(
+                    selected = vm.interests,
+                    onToggleTopic = vm::toggleInterest,
+                    onOpenSearch = { sheet = AppSheet.Search },
+                    onManageInterests = { navController.navigate(ROUTE_INTERESTS) },
+                )
+            }
             composable(Tab.Video.route) { VideoScreen() }
             composable(Tab.Benessere.route) { BenessereScreen(onSaveGratitude = vm::addGratitude) }
             composable(Tab.Raccolta.route) {
-                RaccoltaScreen(gratitude = vm.gratitude, onDeleteGratitude = vm::deleteGratitude)
+                RaccoltaScreen(
+                    gratitude = vm.gratitude,
+                    onDeleteGratitude = vm::deleteGratitude,
+                    interests = vm.interests,
+                    onRemoveInterest = vm::toggleInterest,
+                    onManageInterests = { navController.navigate(ROUTE_INTERESTS) },
+                )
             }
         }
     }

@@ -12,6 +12,11 @@ data class InterestCategory(
     val topics: List<String>,
 )
 
+/** Tutti gli argomenti del catalogo, in ordine di categoria. */
+val CatalogTopics: List<String> by lazy { InterestCategories.flatMap { it.topics } }
+
+fun categoryOf(topic: String): InterestCategory? = InterestCategories.firstOrNull { topic in it.topics }
+
 val InterestCategories = listOf(
     InterestCategory(
         "psicologia", "🧠", "Psicologia e mente", Palette.PlumDeep,

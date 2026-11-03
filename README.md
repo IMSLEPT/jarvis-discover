@@ -8,8 +8,8 @@ sotto il controllo dell'utente. Obiettivo: costo zero, nessuna API a pagamento.
 
 | Fase | Contenuto | Stato |
 |---|---|---|
-| 1 | Identità grafica, navigazione, schermate principali | **in corso** |
-| 2 | Selezione e gestione degli interessi | da fare |
+| 1 | Identità grafica, navigazione, schermate principali | completata |
+| 2 | Selezione e gestione degli interessi | **in corso** |
 | 3 | Feed video con contenuti reali in italiano | da fare |
 | 4 | Catalogo creator e ricerca | da fare |
 | 5 | Notizie positive, libri e podcast | da fare |
@@ -18,8 +18,11 @@ sotto il controllo dell'utente. Obiettivo: costo zero, nessuna API a pagamento.
 | 8 | Assistente AI | da fare |
 | 9 | Ottimizzazione, debug e APK | da fare |
 
-## Cosa funziona davvero (fase 1)
+## Cosa funziona davvero (fasi 1 e 2)
 
+- Primo avvio: scelta degli interessi (7 macro-categorie, tutti i sottoargomenti del documento di
+  progetto), con ricerca e possibilità di aggiungere argomenti propri. Nessun limite di numero.
+- Gli interessi si modificano sempre da Scopri o da La mia raccolta › Interessi e restano sul telefono.
 - Schermata d'apertura "Di cosa hai bisogno oggi?" con scelta multipla facoltativa.
 - Navigazione a cinque sezioni: Oggi, Scopri, Video, Benessere, Raccolta.
 - Oggi: saluto, scelta del tempo (2/5/10/20 min o libero) che adatta il numero di sezioni mostrate.

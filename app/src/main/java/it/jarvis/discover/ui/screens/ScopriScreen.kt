@@ -24,7 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.AssistChip
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -59,7 +59,12 @@ private val Shelves = listOf(
 )
 
 @Composable
-fun ScopriScreen(onOpenSearch: () -> Unit) {
+fun ScopriScreen(
+    selected: List<String>,
+    onToggleTopic: (String) -> Unit,
+    onOpenSearch: () -> Unit,
+    onManageInterests: () -> Unit,
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 28.dp),
@@ -87,6 +92,34 @@ fun ScopriScreen(onOpenSearch: () -> Unit) {
             }
         }
 
+        item(key = "my-interests") {
+            SoftCard(contentPadding = PaddingValues(0.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onManageInterests)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    EmojiBubble(emoji = "🎯", size = 48, background = MaterialTheme.colorScheme.primaryContainer)
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("I tuoi interessi", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                        Text(
+                            text = when (selected.size) {
+                                0 -> "Non ne hai ancora scelto nessuno"
+                                1 -> "1 argomento scelto"
+                                else -> "${selected.size} argomenti scelti"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text("Gestisci", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
+
         item(key = "shelves-title") {
             SectionTitle(title = "Cosa vuoi scoprire?")
         }
@@ -100,12 +133,12 @@ fun ScopriScreen(onOpenSearch: () -> Unit) {
         item(key = "topics-title") {
             SectionTitle(
                 title = "Esplora per argomento",
-                subtitle = "Tocca una categoria per vedere i sottoargomenti. Potrai sceglierli con la fase 2.",
+                subtitle = "Tocca una categoria e scegli i sottoargomenti che ti interessano.",
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
         items(InterestCategories, key = { it.id }) { category ->
-            CategoryCard(category)
+            CategoryCard(category, selected, onToggleTopic)
         }
     }
 }
@@ -126,9 +159,10 @@ private fun ShelfTile(shelf: Shelf, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CategoryCard(category: InterestCategory) {
+private fun CategoryCard(category: InterestCategory, selected: List<String>, onToggleTopic: (String) -> Unit) {
     var expanded by rememberSaveable(category.id) { mutableStateOf(false) }
     val rotation by animateFloatAsState(if (expanded) 180f else 0f, label = "chevron")
+    val chosen = category.topics.count { it in selected }
 
     SoftCard(
         modifier = Modifier.animateContentSize(),
@@ -147,9 +181,9 @@ private fun CategoryCard(category: InterestCategory) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(category.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                     Text(
-                        text = "${category.topics.size} argomenti",
+                        text = if (chosen == 0) "${category.topics.size} argomenti" else "$chosen di ${category.topics.size} scelti",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (chosen == 0) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                     )
                 }
                 Icon(
@@ -166,8 +200,9 @@ private fun CategoryCard(category: InterestCategory) {
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     category.topics.forEach { topic ->
-                        AssistChip(
-                            onClick = {},
+                        FilterChip(
+                            selected = topic in selected,
+                            onClick = { onToggleTopic(topic) },
                             label = { Text(topic, style = MaterialTheme.typography.labelMedium) },
                             shape = CircleShape,
                         )
