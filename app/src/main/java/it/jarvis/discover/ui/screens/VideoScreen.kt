@@ -153,6 +153,7 @@ fun VideoScreen(
     val currentId = items.getOrNull(pager.settledPage)?.id
     LaunchedEffect(currentId) {
         val watched = items.getOrNull(pager.settledPage) ?: return@LaunchedEffect
+        feed.focus = watched
         delay(WATCH_MARK_MS)
         feed.markWatched(watched)
     }

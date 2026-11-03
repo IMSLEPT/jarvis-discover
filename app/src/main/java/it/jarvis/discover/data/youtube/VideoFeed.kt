@@ -215,6 +215,31 @@ class VideoFeed(
         return result
     }
 
+    /** Il video che l'utente ha davanti nel feed in questo momento (serve all'assistente per «spiegami questo video»). */
+    var focus by mutableStateOf<VideoItem?>(null)
+
+    /**
+     * Cerca video su YouTube per l'assistente (consuma una ricerca di quota). Null se non c'è la chiave.
+     * Restituisce solo video che le impostazioni attuali permettono di mostrare.
+     */
+    suspend fun searchVideos(text: String, durationHint: String?, acceptSubtitled: Boolean): ApiResult<List<VideoItem>>? {
+        if (!hasKey) return null
+        if (remainingSearches() <= 0) return ApiResult.Err(YtError(YtErrorKind.QuotaExceeded))
+        val result = withContext(Dispatchers.IO) {
+            val key = secure.get(KEY_NAME) ?: return@withContext null
+            client.fetchFeed(key, listOf(FeedQuery(text, text)), durationHint)
+        }
+        if (result == null) {
+            hasKey = false
+            return null
+        }
+        addSearches(result.searchesDone)
+        val error = result.error
+        if (error?.kind == YtErrorKind.QuotaExceeded) markQuotaExhausted()
+        val items = result.items.filter { it.id !in hiddenIds && it.isShown(acceptSubtitled) }
+        return if (items.isEmpty() && error != null) ApiResult.Err(error) else ApiResult.Ok(items)
+    }
+
     /** Registra ricerche consumate fuori dal feed (ricerca universale, ripiego dei creator). */
     fun noteSearches(n: Int) = addSearches(n)
 

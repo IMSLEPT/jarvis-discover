@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import it.jarvis.discover.data.InterestCategories
 import it.jarvis.discover.data.InterestCategory
 import it.jarvis.discover.ui.components.EmojiBubble
-import it.jarvis.discover.ui.components.PhaseChip
 import it.jarvis.discover.ui.components.ScreenPadding
 import it.jarvis.discover.ui.components.SectionTitle
 import it.jarvis.discover.ui.components.SoftCard

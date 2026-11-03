@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import it.jarvis.discover.data.assistant.AssistantEngine
 import it.jarvis.discover.data.backup.BackupManager
 import it.jarvis.discover.data.content.LibraryStore
 import it.jarvis.discover.data.content.NewsRepository
@@ -80,6 +81,17 @@ class DiscoverViewModel(app: Application) : AndroidViewModel(app) {
     val sessions = SessionPlayer(viewModelScope, TtsSpeaker(app), wellbeing)
     val breathing = BreathingPlayer(viewModelScope, wellbeing)
     val noise = NoisePlayer(viewModelScope, wellbeing)
+
+    /** Assistente: regole in italiano sulle fonti reali dell'app e, se l'utente lo vuole, Gemini con la sua chiave. */
+    val assistant = AssistantEngine(
+        context = app,
+        scope = viewModelScope,
+        feed = videos,
+        news = news,
+        audio = audio,
+        interests = { interests },
+        acceptSubtitled = { acceptSubtitled },
+    )
 
     /** Vero dopo che l'utente ha completato (o saltato) la scelta iniziale degli interessi. */
     var onboardingDone by mutableStateOf(prefs.getBoolean(KEY_ONBOARDED, false))

@@ -59,7 +59,6 @@ import androidx.navigation.compose.rememberNavController
 import it.jarvis.discover.data.DiscoverViewModel
 import it.jarvis.discover.ui.components.BrandBackground
 import it.jarvis.discover.ui.components.EmojiBubble
-import it.jarvis.discover.ui.components.PhaseChip
 import it.jarvis.discover.ui.components.ScreenPadding
 import it.jarvis.discover.ui.components.Wordmark
 import it.jarvis.discover.ui.content.AudiobooksScreen
@@ -70,9 +69,11 @@ import it.jarvis.discover.ui.content.PodcastsScreen
 import it.jarvis.discover.ui.creators.CreatorPage
 import it.jarvis.discover.ui.search.SearchSheet
 import it.jarvis.discover.ui.wellbeing.BenessereScreen
+import it.jarvis.discover.ui.wellbeing.SessionDialog
 import it.jarvis.discover.ui.screens.InterestsScreen
 import it.jarvis.discover.ui.screens.MoodScreen
 import it.jarvis.discover.ui.screens.OggiScreen
+import it.jarvis.discover.ui.assistant.AssistantSheet
 import it.jarvis.discover.ui.screens.RaccoltaScreen
 import it.jarvis.discover.ui.screens.ScopriScreen
 import it.jarvis.discover.ui.screens.VideoScreen
@@ -268,10 +269,13 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
         )
     }
 
+    // Una sessione avviata dall'assistente deve vedersi anche fuori dalla scheda Benessere (lì c'è già il suo dialogo).
+    if (vm.sessions.session != null && route != Tab.Benessere.route) SessionDialog(vm.sessions)
+
     sheet?.let { current ->
         key(current) {
-            // Le impostazioni contengono un campo di testo: si aprono subito a tutta altezza.
-            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = current != AppSheet.Assistant)
+            // Ricerca, assistente e impostazioni contengono un campo di testo: si aprono subito a tutta altezza.
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
             ModalBottomSheet(onDismissRequest = { sheet = null }, sheetState = sheetState) {
                 when (current) {
                     AppSheet.Search -> SearchSheet(
@@ -279,11 +283,14 @@ fun DiscoverApp(vm: DiscoverViewModel, darkTheme: Boolean) {
                         acceptSubtitled = vm.acceptSubtitled,
                         onOpenSettings = { sheet = AppSheet.Settings },
                     )
-                    AppSheet.Assistant -> ComingSoonSheet(
-                        emoji = "✨",
-                        title = "Il tuo assistente",
-                        body = "Potrai chiedergli di trovare video, libri e notizie reali, spiegarti un contenuto o guidarti in cinque minuti di mindfulness.",
-                        phase = 8,
+                    AppSheet.Assistant -> AssistantSheet(
+                        engine = vm.assistant,
+                        feed = vm.videos,
+                        onStartSession = { session ->
+                            sheet = null
+                            vm.sessions.start(session)
+                        },
+                        onOpenSettings = { sheet = AppSheet.Settings },
                     )
                     AppSheet.Settings -> SettingsSheet(vm)
                 }
@@ -332,26 +339,5 @@ private fun DiscoverBottomBar(currentRoute: String?, onSelect: (Tab) -> Unit) {
             )
         }
     }
-    }
-}
-
-@Composable
-private fun ComingSoonSheet(emoji: String, title: String, body: String, phase: Int) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = ScreenPadding)
-            .padding(bottom = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        EmojiBubble(emoji = emoji, size = 64)
-        Text(title, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
-        Text(
-            text = body,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        PhaseChip(phase)
     }
 }

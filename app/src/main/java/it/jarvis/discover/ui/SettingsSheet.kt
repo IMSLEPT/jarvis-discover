@@ -48,6 +48,7 @@ import it.jarvis.discover.data.DiscoverViewModel
 import it.jarvis.discover.data.ThemeMode
 import it.jarvis.discover.data.youtube.KeyTest
 import it.jarvis.discover.data.youtube.VideoFeed
+import it.jarvis.discover.ui.assistant.GeminiSection
 import it.jarvis.discover.ui.components.ScreenPadding
 import it.jarvis.discover.ui.components.openUrl
 
@@ -106,6 +107,8 @@ fun SettingsSheet(vm: DiscoverViewModel) {
 
         YouTubeKeySection(vm.videos)
 
+        GeminiSection(vm.assistant)
+
         BackupSection(vm.backup)
     }
 }
@@ -149,7 +152,7 @@ private fun YouTubeKeySection(feed: VideoFeed) {
                 )
             }
             Text(
-                "È cifrata con una chiave del telefono che non si può esportare. Non viene salvata nei backup né inviata ad altri che a YouTube, per leggere i video.",
+                "È cifrata con una chiave del telefono che non si può esportare. Viene inclusa solo nel file di backup protetto dalla tua passphrase, se ne crei uno, e inviata solo a YouTube per leggere i video.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
