@@ -64,7 +64,7 @@ fun NoiseCard(player: NoisePlayer) {
                 Text(playing.about, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Volume", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Slider(value = player.volume, onValueChange = player::setVolume, modifier = Modifier.weight(1f))
+                    Slider(value = player.volume, onValueChange = player::changeVolume, modifier = Modifier.weight(1f))
                 }
                 Text("Si spegne da solo tra ${player.minutesLeft} min.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedButton(onClick = player::stop, shape = CircleShape) { Text("Ferma") }

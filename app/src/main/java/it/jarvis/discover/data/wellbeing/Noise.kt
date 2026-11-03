@@ -141,7 +141,7 @@ class NoisePlayer(
         }
     }
 
-    fun setVolume(v: Float) {
+    fun changeVolume(v: Float) {
         volume = v.coerceIn(0f, 1f)
         track?.setVolume(volume)
     }
