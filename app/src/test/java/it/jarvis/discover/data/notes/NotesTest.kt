@@ -52,7 +52,7 @@ class NotesTest {
         val s = store(saved = saved)
         s.add(NoteKind.Learned, "ho imparato", "Video")
         val back = store(initial = saved.last())
-        assertEquals(s.notes, back.notes)
+        assertEquals(s.notes.toList(), back.notes.toList())
         assertTrue(store(initial = "rotto").notes.isEmpty())
         assertTrue(store(initial = null).notes.isEmpty())
     }
